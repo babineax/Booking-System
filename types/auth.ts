@@ -1,22 +1,26 @@
 export type UserRole = 'customer' | 'staff' | 'admin';
 
 export interface UserProfile {
-  uid: string;
+  id: string;
   email: string;
-  displayName?: string;
+  display_name?: string;
   role: UserRole;
-  firstName?: string;
-  lastName?: string;
-  phoneNumber?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  first_name?: string;
+  last_name?: string;
+  phone_number?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface AuthUser {
-  uid: string;
+  id: string;
   email: string | null;
-  displayName?: string | null;
-  emailVerified: boolean;
+  email_confirmed_at: string | null;
+  user_metadata?: {
+    first_name?: string;
+    last_name?: string;
+    display_name?: string;
+  };
 }
 
 export interface AuthContextType {

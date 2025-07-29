@@ -52,9 +52,9 @@ export default function RegisterScreen() {
     try {
       setLoading(true);
       await signUp(formData.email, formData.password, {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phoneNumber: formData.phoneNumber,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        phone_number: formData.phoneNumber,
         role: 'customer'
       });
       router.replace('/(app)');

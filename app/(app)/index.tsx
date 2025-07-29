@@ -23,7 +23,7 @@ export default function HomeScreen() {
         {userProfile && (
           <View className="mb-8">
             <Text className="text-lg text-gray-700 mb-2">
-              Hello, {userProfile.firstName} {userProfile.lastName}!
+              Hello, {userProfile.first_name} {userProfile.last_name}!
             </Text>
             <Text className="text-gray-600 mb-2">
               Email: {user?.email}
@@ -31,9 +31,9 @@ export default function HomeScreen() {
             <Text className="text-gray-600 mb-2">
               Role: {userProfile.role}
             </Text>
-            {userProfile.phoneNumber && (
+            {userProfile.phone_number && (
               <Text className="text-gray-600 mb-2">
-                Phone: {userProfile.phoneNumber}
+                Phone: {userProfile.phone_number}
               </Text>
             )}
           </View>

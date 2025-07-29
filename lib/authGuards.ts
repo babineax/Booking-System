@@ -5,7 +5,7 @@ export const useAuthGuard = () => {
   const { user, userProfile, loading } = useAuth();
 
   const isAuthenticated = !!user;
-  const isEmailVerified = user?.emailVerified || false;
+  const isEmailVerified = !!user?.email_confirmed_at;
 
   const hasRole = (requiredRole: UserRole): boolean => {
     if (!userProfile) return false;

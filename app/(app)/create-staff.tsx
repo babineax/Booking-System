@@ -64,9 +64,9 @@ export default function CreateStaffScreen() {
     try {
       setLoading(true);
       await createStaffAccount(formData.email, formData.password, {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phoneNumber: formData.phoneNumber,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        phone_number: formData.phoneNumber,
         role: formData.role
       });
       

@@ -31,7 +31,7 @@ export interface AuthContextType {
   signUp: (email: string, password: string, userData: Partial<UserProfile>) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
-  createStaffAccount: (email: string, password: string, userData: Partial<UserProfile>) => Promise<void>;
+  createStaffAccount: (email: string, password: string, userData: Partial<UserProfile>) => Promise<void>; // should complete the function signature
 }
 
 export interface SignUpData {

@@ -32,8 +32,6 @@ A  booking system app with Supabase authentication and role-based access control
    - System administration
    - Full access to all features
 
-## Setup Instructions
-
 
 
 ## Project Structure

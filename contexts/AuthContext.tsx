@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const fetchUserProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
-        .from('user_profiles')
+        .from('user_profiles') // field should be in 'user_profiles' db 
         .select('*')
         .eq('id', userId)
         .single();
@@ -55,6 +55,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return;
       }
 
+       // better error handling
       if (data) {
         setUserProfile(data);
       }
@@ -66,7 +67,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signIn = async (email: string, password: string): Promise<void> => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({  // signInWithPassword is the correct method 
         email,
         password,
       });
@@ -139,9 +140,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         throw new Error('Unauthorized: Only admin users can create staff accounts');
       }
 
-      // This would require server-side implementation or Supabase Edge Functions
+      
       // For now, we'll throw an error indicating this needs backend implementation
-      throw new Error('Staff account creation requires server-side implementation. Please use Supabase Auth Admin API or Edge Functions.');
+      throw new Error('Staff account creation requires server-side implementation. ');
 
     } catch (error: any) {
       console.error('Create staff account error:', error);
@@ -167,7 +168,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const resetPassword = async (email: string): Promise<void> => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'your-app://reset-password', // Update with your app's deep link
+        redirectTo: 'your-app://reset-password', // Update app's deep link
       });
       
       if (error) throw error;

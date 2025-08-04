@@ -2,7 +2,8 @@ import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
 import asyncHandler from "./asyncHandler.js";
 
-const authenticate = asyncHandler(async (req, res, next) => {
+// Protect routes - user must be authenticated
+const protect = asyncHandler(async (req, res, next) => {
   let token;
 
   // read jwt token from 'jwt cookie'
@@ -23,4 +24,28 @@ const authenticate = asyncHandler(async (req, res, next) => {
   }
 });
 
-export { authenticate };
+// Admin middleware
+const admin = asyncHandler(async (req, res, next) => {
+  if (req.user && (req.user.isAdmin || req.user.role === 'admin')) {
+    next();
+  } else {
+    res.status(403);
+    throw new Error('Not authorized as admin');
+  }
+});
+
+// Staff middleware (includes admin)
+const staff = asyncHandler(async (req, res, next) => {
+  if (req.user && (req.user.role === 'staff' || req.user.role === 'admin' || req.user.isAdmin)) {
+    next();
+  } else {
+    res.status(403);
+    throw new Error('Not authorized as staff');
+  }
+});
+
+// Legacy authenticate export for backward compatibility
+const authenticate = protect;
+
+export { admin, authenticate, protect, staff };
+

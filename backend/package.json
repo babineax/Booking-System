@@ -13,7 +13,11 @@
   "version": "1.0.0",
   "main": "server.js",
   "type": "module",
-  "devDependencies": {},
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.9",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"

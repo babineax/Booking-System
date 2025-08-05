@@ -1,6 +1,7 @@
 import { View, Text } from "react-native";
 
-const steps = ["Select Date", "Pick Time", "Choose Service", "Confirm"];
+// FIX 1: Update the steps array to match the new booking flow.
+const steps = ["Choose Service", "Select Date", "Pick Time", "Confirm"];
 
 type Props = {
   currentStep: number;

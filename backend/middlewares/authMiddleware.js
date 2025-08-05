@@ -6,8 +6,17 @@ import asyncHandler from "./asyncHandler.js";
 const protect = asyncHandler(async (req, res, next) => {
   let token;
 
-  // read jwt token from 'jwt cookie'
-  token = req.cookies.jwt;
+  // Check for token in Authorization header for mobile
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer ")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+  // fall back to cookie (for web)
+  else if (req.cookies?.jwt) {
+    token = req.cookies.jwt;
+  }
 
   if (token) {
     try {
@@ -26,21 +35,24 @@ const protect = asyncHandler(async (req, res, next) => {
 
 // Admin middleware
 const admin = asyncHandler(async (req, res, next) => {
-  if (req.user && (req.user.isAdmin || req.user.role === 'admin')) {
+  if (req.user && (req.user.isAdmin || req.user.role === "admin")) {
     next();
   } else {
     res.status(403);
-    throw new Error('Not authorized as admin');
+    throw new Error("Not authorized as admin");
   }
 });
 
 // Staff middleware (includes admin)
 const staff = asyncHandler(async (req, res, next) => {
-  if (req.user && (req.user.role === 'staff' || req.user.role === 'admin' || req.user.isAdmin)) {
+  if (
+    req.user &&
+    (req.user.role === "staff" || req.user.role === "admin" || req.user.isAdmin)
+  ) {
     next();
   } else {
     res.status(403);
-    throw new Error('Not authorized as staff');
+    throw new Error("Not authorized as staff");
   }
 });
 
@@ -48,4 +60,3 @@ const staff = asyncHandler(async (req, res, next) => {
 const authenticate = protect;
 
 export { admin, authenticate, protect, staff };
-

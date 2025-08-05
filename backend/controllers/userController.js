@@ -4,12 +4,13 @@ import User from "../models/userModel.js";
 import createToken from "../utils/createToken.js";
 
 const createUser = asyncHandler(async (req, res) => {
-  const { username, email, password, firstName, lastName, phone, role } = req.body;
+  const { username, email, password, firstName, lastName, phone, role } =
+    req.body;
 
   if (!username || !email || !password || !firstName || !lastName) {
     throw new Error("Please fill all the required inputs");
   }
-  
+
   const userExists = await User.findOne({ email });
 
   if (userExists) {
@@ -19,21 +20,21 @@ const createUser = asyncHandler(async (req, res) => {
 
   const salt = await bcrypt.genSalt(10);
   const hashpassword = await bcrypt.hash(password, salt);
-  
-  const newUser = new User({ 
-    username, 
-    email, 
+
+  const newUser = new User({
+    username,
+    email,
     password: hashpassword,
     firstName,
     lastName,
     phone,
-    role: role || 'customer'
+    role: role || "customer",
   });
-  
+
   try {
     await newUser.save();
     createToken(res, newUser._id);
-    
+
     res.status(201).json({
       _id: newUser._id,
       username: newUser.username,
@@ -77,7 +78,7 @@ const loginUser = asyncHandler(async (req, res) => {
       return;
     }
   }
-  
+
   res.status(401);
   throw new Error("Invalid email or password");
 });
@@ -90,18 +91,16 @@ const logoutCurrentUser = asyncHandler(async (req, res) => {
   res.status(200).json("logged out successfully");
 });
 
-
 const getUserProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).select('-password');
-  
+  const user = await User.findById(req.user._id).select("-password");
+
   if (user) {
     res.json(user);
   } else {
     res.status(404);
-    throw new Error('User not found');
+    throw new Error("User not found");
   }
 });
-
 
 const updateUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
@@ -112,7 +111,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     user.email = req.body.email || user.email;
     user.phone = req.body.phone || user.phone;
     user.username = req.body.username || user.username;
-    
+
     if (req.body.password) {
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(req.body.password, salt);
@@ -132,28 +131,47 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     });
   } else {
     res.status(404);
-    throw new Error('User not found');
+    throw new Error("User not found");
   }
 });
 
-
 const getStaffMembers = asyncHandler(async (req, res) => {
-  const staff = await User.find({ 
-    role: 'staff', 
-    isActive: true 
-  }).select('-password');
-  
+  const staff = await User.find({
+    role: "staff",
+    isActive: true,
+  }).select("-password");
+
   res.json(staff);
 });
 
-
 const getUsers = asyncHandler(async (req, res) => {
-  const users = await User.find({}).select('-password');
+  const users = await User.find({}).select("-password");
   res.json(users);
 });
 
-export {
-    createUser, getStaffMembers, getUserProfile, getUsers, loginUser,
-    logoutCurrentUser, updateUserProfile
-};
+const deleteUserById = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
 
+  if (user) {
+    if (user.isAdmin) {
+      res.status(404);
+      throw new Error("an admin cannot be deleted");
+    }
+    await User.deleteOne({ _id: user._id });
+    res.json({ message: "user removed" });
+  } else {
+    res.status(404);
+    throw new Error("users not found");
+  }
+});
+
+export {
+  createUser,
+  deleteUserById,
+  getStaffMembers,
+  getUserProfile,
+  getUsers,
+  loginUser,
+  logoutCurrentUser,
+  updateUserProfile,
+};

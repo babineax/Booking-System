@@ -33,7 +33,7 @@ const createUser = asyncHandler(async (req, res) => {
 
   try {
     await newUser.save();
-    createToken(res, newUser._id);
+    const token = createToken(res, newUser._id);
 
     res.status(201).json({
       _id: newUser._id,
@@ -44,6 +44,7 @@ const createUser = asyncHandler(async (req, res) => {
       phone: newUser.phone,
       role: newUser.role,
       isAdmin: newUser.isAdmin,
+      token,
     });
   } catch (error) {
     console.log(error);
@@ -63,7 +64,7 @@ const loginUser = asyncHandler(async (req, res) => {
       existingUser.password
     );
     if (isPasswordValid) {
-      createToken(res, existingUser._id);
+      const token = createToken(res, existingUser._id);
 
       res.status(201).json({
         _id: existingUser._id,
@@ -74,6 +75,7 @@ const loginUser = asyncHandler(async (req, res) => {
         phone: existingUser.phone,
         role: existingUser.role,
         isAdmin: existingUser.isAdmin,
+        token,
       });
       return;
     }

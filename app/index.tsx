@@ -1,9 +1,13 @@
-import { Text, View } from "react-native";
+import { useRouter } from "expo-router";
+import { View, Text, Button } from "react-native";
 
 export default function Index() {
+  const router = useRouter();
+
   return (
-    <View className="flex-1 items-center justify-center bg-white">
-      <Text className="text-4xl font-bold text-blue-800">Welcome</Text>
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text style={{ fontSize: 24, marginBottom: 20 }}>Welcome</Text>
+      <Button title="Browse Services" onPress={() => router.push("../screens/ServiceListScreen")} />
     </View>
   );
 }

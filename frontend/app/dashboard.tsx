@@ -1,5 +1,6 @@
 "use client";
 
+import ApiDebugComponent from "@/components/ApiDebugComponent";
 import { useRouter } from "expo-router";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
@@ -46,6 +47,8 @@ export default function DashboardScreen() {
           <Text style={styles.buttonText}>Logout</Text>
         </TouchableOpacity>
       </View>
+       
+      {/* <ApiDebugComponent /> */} {/* Uncomment for debugging API calls */}
     </View>
   );
 }

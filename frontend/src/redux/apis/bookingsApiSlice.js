@@ -13,7 +13,7 @@ export const bookingsApiSlice = apiSlice.injectEndpoints({
 
     getMyBookings: builder.query({
       query: () => ({
-        url: `${BOOKINGS_URL}/my`,
+        url: `${BOOKINGS_URL}/my-bookings`,
       }),
       providesTags: ["Booking"],
     }),
@@ -52,7 +52,7 @@ export const bookingsApiSlice = apiSlice.injectEndpoints({
 
     getAvailableSlots: builder.query({
       query: (params) => ({
-        url: `${BOOKINGS_URL}/available`,
+        url: `${BOOKINGS_URL}/available-slots`,
         params,
       }),
     }),

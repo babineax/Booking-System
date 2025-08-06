@@ -1,11 +1,11 @@
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-// Updated type to match the backend model
+
 type Service = {
-  _id: string; // The backend uses _id for the unique ID
+  _id: string; 
   name: string;
   description?: string;
-  duration?: number; // in minutes
+  duration?: number; 
   price?: number;
 };
 
@@ -14,13 +14,11 @@ type Props = {
   setService: (id: string) => void;
   onNext: () => void;
   onBack?: () => void;
-  services: Service[]; // Add services prop
+  services: Service[]; 
 };
 
 const ServiceSelector = ({ service, setService, onNext, onBack, services }: Props) => {
-  // Services are now passed as props from the parent component
-  // that handles the Redux query
-
+  
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Choose a Service</Text>

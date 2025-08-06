@@ -10,8 +10,8 @@ const getBaseUrl = () => {
     return "http://localhost:3001";
   }
   
-  // For prod not sure we need it for now but f*ck it
-  return "https://your-production-api.com";
+  
+  return "https://prod-api";
 };
 
 export const BASE_URL = getBaseUrl();

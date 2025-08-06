@@ -1,5 +1,6 @@
-import { View, Text, TouchableOpacity, FlatList } from "react-native";
-import { format, addDays } from "date-fns";
+import { View, Text, TouchableOpacity } from "react-native";
+import { format } from "date-fns";
+import { Calendar } from "react-native-calendars";
 
 type Props = {
   date: string;
@@ -8,35 +9,29 @@ type Props = {
 };
 
 const DatePicker = ({ date, setDate, onNext }: Props) => {
-  const days = Array.from({ length: 14 }, (_, i) => addDays(new Date(), i));
+  // Format the selected date for the calendar's `markedDates` prop
+  const markedDate = date
+    ? {
+        [format(new Date(date), "yyyy-MM-dd")]: {
+          selected: true,
+          selectedColor: "#1d4ed8", // Corresponds to Tailwind's 'blue-600'
+        },
+      }
+    : {};
 
   return (
     <View className="gap-4">
       <Text className="text-xl font-bold text-blue-800">Pick a Date</Text>
 
-      <FlatList
-        horizontal
-        data={days}
-        keyExtractor={(item) => item.toDateString()}
-        showsHorizontalScrollIndicator={false}
-        className="mb-4"
-        renderItem={({ item }) => {
-          const formatted = format(item, "EEE, MMM d");
-          const isSelected = date === item.toDateString();
-
-          return (
-            <TouchableOpacity
-              onPress={() => setDate(item.toDateString())}
-              className={`px-4 py-2 rounded-lg mx-1 border ${
-                isSelected ? "bg-blue-600 border-blue-700" : "bg-white border-gray-300"
-              }`}
-            >
-              <Text className={`text-sm ${isSelected ? "text-white" : "text-black"}`}>
-                {formatted}
-              </Text>
-            </TouchableOpacity>
-          );
+      <Calendar
+        // This marks the selected day in the calendar UI
+        markedDates={markedDate}
+        // This is the function that gets called when a day is pressed
+        onDayPress={(day) => {
+          setDate(new Date(day.dateString).toDateString());
         }}
+        // Optional: you can disable past dates
+        minDate={new Date()}
       />
 
       <TouchableOpacity

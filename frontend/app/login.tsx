@@ -1,18 +1,42 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { MaterialCommunityIcons, FontAwesome } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useDispatch } from 'react-redux';
+import { useLoginMutation } from '../src/redux/apis/usersApiSlice';
+import { setCredentials } from '../src/redux/features/auth/authSlice';
 
-// Define your navigation stack types
-type AuthStackParamList = {
-  Login: undefined;
-  Signup: undefined;
-};
-
-// Use typed navigation
 const LoginScreen = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const [login, { isLoading }] = useLoginMutation();
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    try {
+      console.log('Attempting login...');
+      const userData = await login({ email, password }).unwrap();
+      console.log('Login successful, userData:', userData);
+      
+      dispatch(setCredentials(userData));
+      console.log('Credentials set, navigating to dashboard...');
+      
+      
+      router.push('/dashboard');
+      console.log('Navigation called');
+      
+    } catch (error: any) {
+      console.error('Login error:', error);
+      Alert.alert('Login Failed', error?.data?.message || 'Login failed. Please try again.');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -29,6 +53,10 @@ const LoginScreen = () => {
           style={styles.input}
           placeholderTextColor="#ccc"
           underlineColorAndroid="transparent"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
         />
       </View>
 
@@ -41,6 +69,8 @@ const LoginScreen = () => {
           style={styles.input}
           placeholderTextColor="#ccc"
           underlineColorAndroid="transparent"
+          value={password}
+          onChangeText={setPassword}
         />
       </View>
 
@@ -49,8 +79,14 @@ const LoginScreen = () => {
       </TouchableOpacity>
 
       {/* Login Button */}
-      <TouchableOpacity style={styles.loginButton}>
-        <Text style={styles.loginText}>Login</Text>
+      <TouchableOpacity 
+        style={styles.loginButton} 
+        onPress={handleLogin}
+        disabled={isLoading}
+      >
+        <Text style={styles.loginText}>
+          {isLoading ? 'Logging in...' : 'Login'}
+        </Text>
       </TouchableOpacity>
 
       <Text style={styles.orText}>Or</Text>
@@ -67,8 +103,8 @@ const LoginScreen = () => {
 
       {/* Sign Up Prompt */}
       <Text style={styles.signupPrompt}>
-        Don’t Have an Account?{' '}
-        <Text style={styles.signupText} onPress={() => navigation.navigate('Signup')}>
+        Don't Have an Account?{' '}
+        <Text style={styles.signupText} onPress={() => router.push('/register')}>
           Sign Up
         </Text>
       </Text>
@@ -76,85 +112,99 @@ const LoginScreen = () => {
   );
 };
 
-export default LoginScreen;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 30,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5',
+    padding: 20,
   },
   logo: {
-    width: 60,
-    height: 60,
+    width: 100,
+    height: 100,
     marginBottom: 20,
   },
   title: {
-    fontSize: 18,
+    fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 20,
+    color: '#333',
+    marginBottom: 40,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderColor: '#00BCD4',
+    backgroundColor: '#fff',
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 15,
-    width: '30%',
-    height: 45,
+    borderColor: '#ddd',
+    borderRadius: 25,
+    paddingHorizontal: 15,
+    marginBottom: 20,
+    width: '100%',
+    height: 50,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   icon: {
     marginRight: 10,
   },
   input: {
     flex: 1,
-    height: '100%',
-    borderRadius: 8,
-    paddingHorizontal: 5,
-    fontSize: 13,
-    color: '#000',
-    marginBottom: 0,
-    paddingVertical: 10,
+    fontSize: 16,
+    color: '#333',
   },
   forgotPassword: {
-    alignSelf: 'flex-end',
-    color: '#333',
-    marginBottom: 20,
+    color: '#00BCD4',
+    fontSize: 14,
+    marginBottom: 30,
+    textAlign: 'right',
+    width: '100%',
   },
   loginButton: {
     backgroundColor: '#00BCD4',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 80,
+    borderRadius: 25,
+    paddingVertical: 15,
+    paddingHorizontal: 40,
     marginBottom: 20,
+    width: '100%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
   },
   loginText: {
     color: '#fff',
+    fontSize: 18,
     fontWeight: 'bold',
-    fontSize: 16,
   },
   orText: {
-    color: '#333',
-    marginBottom: 10,
+    color: '#666',
+    fontSize: 16,
+    marginVertical: 20,
   },
   socialContainer: {
     flexDirection: 'row',
-    marginBottom: 20,
+    justifyContent: 'space-around',
+    width: 120,
+    marginBottom: 30,
   },
   socialIcon: {
     width: 40,
     height: 40,
-    marginHorizontal: 10,
   },
   signupPrompt: {
-    color: '#000',
+    fontSize: 16,
+    color: '#666',
   },
   signupText: {
     color: '#00BCD4',
     fontWeight: 'bold',
   },
 });
+
+export default LoginScreen;

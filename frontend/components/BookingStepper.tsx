@@ -1,5 +1,4 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 const steps = ["Choose Service", "Select Date", "Pick Time", "Confirm"];
 
@@ -14,24 +13,43 @@ const BookingStepper = ({ currentStep }: Props) => {
         const isActive = index === currentStep;
         const isCompleted = index < currentStep;
 
-        const stepStyle = isCompleted
-          ? styles.stepCompleted
-          : isActive
-          ? styles.stepActive
-          : styles.stepInactive;
-
-        const textStyle = isCompleted
-          ? styles.textCompleted
-          : isActive
-          ? styles.textActive
-          : styles.textInactive;
-
         return (
           <View key={index} style={styles.stepContainer}>
-            <View style={[styles.stepCircle, stepStyle]}>
-              <Text style={styles.stepNumber}>{index + 1}</Text>
+            <View style={styles.stepIndicator}>
+              <View
+                style={[
+                  styles.circle,
+                  isActive && styles.activeCircle,
+                  isCompleted && styles.completedCircle,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.stepNumber,
+                    (isActive || isCompleted) && styles.activeStepNumber,
+                  ]}
+                >
+                  {index + 1}
+                </Text>
+              </View>
+              {index < steps.length - 1 && (
+                <View
+                  style={[
+                    styles.line,
+                    isCompleted && styles.completedLine,
+                  ]}
+                />
+              )}
             </View>
-            <Text style={[styles.stepLabel, textStyle]}>{label}</Text>
+            <Text
+              style={[
+                styles.stepLabel,
+                isActive && styles.activeStepLabel,
+                isCompleted && styles.completedStepLabel,
+              ]}
+            >
+              {label}
+            </Text>
           </View>
         );
       })}
@@ -42,50 +60,70 @@ const BookingStepper = ({ currentStep }: Props) => {
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
+    alignItems: "flex-start",
     justifyContent: "space-between",
-    alignItems: "center",
     marginBottom: 24,
     paddingHorizontal: 8,
   },
   stepContainer: {
-    alignItems: "center",
     flex: 1,
+    alignItems: "center",
   },
-  stepCircle: {
+  stepIndicator: {
+    alignItems: "center",
+    flexDirection: "row",
+    width: "100%",
+  },
+  circle: {
     width: 32,
     height: 32,
     borderRadius: 16,
+    backgroundColor: "#e5e7eb",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#d1d5db",
   },
-  stepActive: {
-    backgroundColor: "#2563EB", // Tailwind's blue-600
+  activeCircle: {
+    backgroundColor: "#2563eb",
+    borderColor: "#1d4ed8",
   },
-  stepCompleted: {
-    backgroundColor: "#16A34A", // Tailwind's green-600
-  },
-  stepInactive: {
-    backgroundColor: "#D1D5DB", // Tailwind's gray-300
+  completedCircle: {
+    backgroundColor: "#10b981",
+    borderColor: "#059669",
   },
   stepNumber: {
-    color: "#fff",
-    fontWeight: "bold",
     fontSize: 14,
+    fontWeight: "600",
+    color: "#6b7280",
+  },
+  activeStepNumber: {
+    color: "#ffffff",
+  },
+  line: {
+    flex: 1,
+    height: 2,
+    backgroundColor: "#e5e7eb",
+    marginLeft: 8,
+  },
+  completedLine: {
+    backgroundColor: "#10b981",
   },
   stepLabel: {
     fontSize: 12,
-    marginTop: 4,
+    fontWeight: "500",
+    color: "#6b7280",
     textAlign: "center",
+    marginTop: 8,
+    paddingHorizontal: 4,
   },
-  textActive: {
-    color: "#1D4ED8", // Tailwind's blue-700
+  activeStepLabel: {
+    color: "#2563eb",
     fontWeight: "600",
   },
-  textCompleted: {
-    color: "#15803D", // Tailwind's green-700
-  },
-  textInactive: {
-    color: "#9CA3AF", // Tailwind's gray-400
+  completedStepLabel: {
+    color: "#10b981",
+    fontWeight: "600",
   },
 });
 

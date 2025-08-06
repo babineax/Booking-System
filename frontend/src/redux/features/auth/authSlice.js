@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createSlice } from "@reduxjs/toolkit";
 
-// Initial state — will be overridden after hydration
+
 const initialState = {
   userInfo: null,
 };
@@ -19,6 +19,12 @@ const authSlice = createSlice({
             "userInfo",
             JSON.stringify(action.payload)
           );
+          
+          
+          if (action.payload.token) {
+            await AsyncStorage.setItem("token", action.payload.token);
+          }
+          
           const expirationTime = (
             new Date().getTime() +
             30 * 24 * 60 * 60 * 1000

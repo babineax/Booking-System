@@ -1,4 +1,4 @@
-import { FlatList, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 // Updated type to match the backend model
 type Service = {
@@ -22,37 +22,38 @@ const ServiceSelector = ({ service, setService, onNext, onBack, services }: Prop
   // that handles the Redux query
 
   return (
-    <View className="flex-1 gap-4">
-      <Text className="text-xl font-bold text-blue-800">Choose a Service</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Choose a Service</Text>
 
       <FlatList
         data={services}
         keyExtractor={(item) => item._id}
-        style={{ flex: 1 }}
+        style={styles.list}
         renderItem={({ item }) => {
           const isSelected = service === item._id;
 
           return (
             <TouchableOpacity
               onPress={() => setService(item._id)}
-              className={`p-3 rounded-lg mb-2 shadow-sm active:opacity-75 ${
-                isSelected
-                  ? "bg-blue-600 border border-blue-700"
-                  : "bg-white border border-gray-300"
-              }`}
+              style={[
+                styles.serviceItem,
+                isSelected ? styles.selectedItem : styles.unselectedItem
+              ]}
             >
               <Text
-                className={`text-base font-semibold ${
-                  isSelected ? "text-white" : "text-black"
-                }`}
+                style={[
+                  styles.serviceName,
+                  isSelected ? styles.selectedText : styles.unselectedText
+                ]}
               >
                 {item.name}
               </Text>
               {item.price && (
                 <Text
-                  className={`text-sm ${
-                    isSelected ? "text-white" : "text-gray-600"
-                  }`}
+                  style={[
+                    styles.servicePrice,
+                    isSelected ? styles.selectedText : styles.unselectedText
+                  ]}
                 >
                   KES {item.price}
                 </Text>
@@ -62,28 +63,111 @@ const ServiceSelector = ({ service, setService, onNext, onBack, services }: Prop
         }}
       />
 
-      <View className="flex-row justify-between mt-4">
+      <View style={styles.buttonContainer}>
         {onBack && (
           <TouchableOpacity
             onPress={onBack}
-            className="flex-1 mr-2 py-3 bg-gray-300 rounded-lg"
+            style={[styles.button, styles.backButton]}
           >
-            <Text className="text-center text-black font-medium">Back</Text>
+            <Text style={styles.backButtonText}>Back</Text>
           </TouchableOpacity>
         )}
 
         <TouchableOpacity
           disabled={!service}
           onPress={onNext}
-          className={`flex-1 ${onBack ? "ml-2" : ""} py-3 rounded-lg ${
-            service ? "bg-blue-600" : "bg-gray-300"
-          }`}
+          style={[
+            styles.button,
+            styles.nextButton,
+            onBack ? styles.buttonHalf : styles.buttonFull,
+            !service && styles.disabledButton
+          ]}
         >
-          <Text className="text-center text-white font-semibold">Next</Text>
+          <Text style={styles.nextButtonText}>Next</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    gap: 16,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1e40af',
+    marginBottom: 16,
+  },
+  list: {
+    flex: 1,
+  },
+  serviceItem: {
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+  },
+  selectedItem: {
+    backgroundColor: '#2563eb',
+    borderColor: '#1d4ed8',
+  },
+  unselectedItem: {
+    backgroundColor: '#ffffff',
+    borderColor: '#d1d5db',
+  },
+  serviceName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  servicePrice: {
+    fontSize: 14,
+  },
+  selectedText: {
+    color: '#ffffff',
+  },
+  unselectedText: {
+    color: '#000000',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+  },
+  button: {
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  backButton: {
+    backgroundColor: '#d1d5db',
+    flex: 1,
+    marginRight: 8,
+  },
+  nextButton: {
+    backgroundColor: '#2563eb',
+  },
+  buttonFull: {
+    flex: 1,
+  },
+  buttonHalf: {
+    flex: 1,
+    marginLeft: 8,
+  },
+  disabledButton: {
+    backgroundColor: '#d1d5db',
+  },
+  backButtonText: {
+    color: '#000000',
+    fontWeight: '500',
+  },
+  nextButtonText: {
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+});
 
 export default ServiceSelector;

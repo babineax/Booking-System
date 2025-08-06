@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, FlatList, ActivityIndicator } from "react-native";
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type Props = {
   date: string;
@@ -39,8 +39,8 @@ const TimeSlotSelector = ({ date, time, setTime, onNext, onBack }: Props) => {
   }, [date]);
 
   return (
-    <View className="gap-4">
-      <Text className="text-xl font-bold text-blue-800">Pick a Time</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Pick a Time</Text>
 
       {loading ? (
         <ActivityIndicator size="large" color="#2563EB" />
@@ -49,18 +49,22 @@ const TimeSlotSelector = ({ date, time, setTime, onNext, onBack }: Props) => {
           data={slots}
           keyExtractor={(item) => item}
           numColumns={2}
-          columnWrapperStyle={{ justifyContent: "space-between" }}
+          columnWrapperStyle={styles.row}
           renderItem={({ item }) => {
             const isSelected = time === item;
 
             return (
               <TouchableOpacity
                 onPress={() => setTime(item)}
-                className={`px-4 py-3 rounded-lg mb-3 w-[48%] border ${
-                  isSelected ? "bg-blue-600 border-blue-700" : "bg-white border-gray-300"
-                }`}
+                style={[
+                  styles.timeSlot,
+                  isSelected ? styles.selectedSlot : styles.unselectedSlot
+                ]}
               >
-                <Text className={`text-center ${isSelected ? "text-white" : "text-black"}`}>
+                <Text style={[
+                  styles.timeText,
+                  isSelected ? styles.selectedText : styles.unselectedText
+                ]}>
                   {item}
                 </Text>
               </TouchableOpacity>
@@ -69,26 +73,101 @@ const TimeSlotSelector = ({ date, time, setTime, onNext, onBack }: Props) => {
         />
       )}
 
-      <View className="flex-row justify-between mt-4">
+      <View style={styles.buttonContainer}>
         <TouchableOpacity
           onPress={onBack}
-          className="flex-1 mr-2 py-3 bg-gray-300 rounded-lg"
+          style={[styles.button, styles.backButton]}
         >
-          <Text className="text-center text-black font-medium">Back</Text>
+          <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           disabled={!time}
           onPress={onNext}
-          className={`flex-1 ml-2 py-3 rounded-lg ${
-            time ? "bg-blue-600" : "bg-gray-300"
-          }`}
+          style={[
+            styles.button,
+            styles.nextButton,
+            time ? styles.enabledNextButton : styles.disabledNextButton
+          ]}
         >
-          <Text className="text-center text-white font-semibold">Next</Text>
+          <Text style={styles.nextButtonText}>Next</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    gap: 16,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1e40af',
+    marginBottom: 16,
+  },
+  row: {
+    justifyContent: 'space-between',
+  },
+  timeSlot: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    width: '48%',
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  selectedSlot: {
+    backgroundColor: '#2563eb',
+    borderColor: '#1d4ed8',
+  },
+  unselectedSlot: {
+    backgroundColor: '#ffffff',
+    borderColor: '#d1d5db',
+  },
+  timeText: {
+    textAlign: 'center',
+  },
+  selectedText: {
+    color: '#ffffff',
+  },
+  unselectedText: {
+    color: '#000000',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+  },
+  button: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  backButton: {
+    backgroundColor: '#d1d5db',
+    marginRight: 8,
+  },
+  nextButton: {
+    marginLeft: 8,
+  },
+  enabledNextButton: {
+    backgroundColor: '#2563eb',
+  },
+  disabledNextButton: {
+    backgroundColor: '#d1d5db',
+  },
+  backButtonText: {
+    color: '#000000',
+    fontWeight: '500',
+  },
+  nextButtonText: {
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+});
 
 export default TimeSlotSelector;

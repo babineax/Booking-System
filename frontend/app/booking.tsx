@@ -1,75 +1,146 @@
 "use client";
 
+import BookingConfirmation from "@/components/BookingConfirmation";
 import BookingStepper from "@/components/BookingStepper";
 import DatePicker from "@/components/DatePicker";
 import ServiceSelector from "@/components/ServiceSelector";
 import TimeSlotSelector from "@/components/TimeSlotSelector";
+import { useRouter } from "expo-router";
 import { useState } from "react";
-import { View } from "react-native";
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
+import { useCreateBookingMutation } from "../src/redux/apis/bookingsApiSlice";
+import { useGetServicesQuery } from "../src/redux/apis/servicesApiSlice";
 
-// --- DUMMY DATA ---
-// We need this to simulate the full service object for the confirmation page.
-const DUMMY_SERVICES = [
-  { _id: '1', name: 'Haircut', description: 'Classic haircut and style', duration: 30, price: 3000 },
-  { _id: '2', name: 'Beard Trim', description: 'Professional beard trimming and shaping', duration: 15, price: 1500 },
-  { _id: '3', name: 'Manicure & Pedicure', description: 'Full manicure and pedicure service', duration: 60, price: 5000 },
-  { _id: '4', name: 'Hair Styling', description: 'Advanced hair styling for events', duration: 45, price: 4000 },
-];
+type Service = {
+  _id: string;
+  name: string;
+  duration: number;
+  price: number;
+  description?: string;
+  category?: string;
+};
 
 export default function BookingPage() {
-  const router = useRouter(); // Initialize the router
+  const router = useRouter();
   const [step, setStep] = useState(0);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
-  const [selectedServiceId, setSelectedServiceId] = useState(""); // Renamed for clarity
+  const [selectedServiceId, setSelectedServiceId] = useState("");
+
+  // Redux queries for real data
+  const { data: services = [], isLoading: servicesLoading, error: servicesError } = useGetServicesQuery({});
+  const [createBooking, { isLoading: bookingLoading }] = useCreateBookingMutation();
 
   const handleNext = () => setStep((prev) => prev + 1);
   const handleBack = () => setStep((prev) => prev - 1);
+  const handleEdit = () => setStep(0);
 
-  // --- NEW: Dummy Booking Confirmation Logic ---
-  const handleConfirmBooking = () => {
-    // This is where you would normally make an API call to create the booking
-    // For now, we'll just show a success alert and redirect.
-    Alert.alert(
-      "Booking Confirmed!",
-      "Your appointment has been successfully scheduled. We will send you a confirmation email shortly.",
-      [
-        {
-          text: "OK",
-          onPress: () => router.replace('/'), // Redirect to home screen
-        },
-      ]
-    );
+  const handleConfirmBooking = async () => {
+    try {
+      const bookingData = {
+        serviceId: selectedServiceId,
+        date: selectedDate,
+        time: selectedTime,
+      };
+
+      await createBooking(bookingData).unwrap();
+      
+      Alert.alert(
+        "Booking Confirmed!",
+        "Your appointment has been successfully scheduled. We will send you a confirmation email shortly.",
+        [
+          {
+            text: "OK",
+            onPress: () => router.replace('/'),
+          },
+        ]
+      );
+    } catch (error) {
+      Alert.alert(
+        "Booking Failed",
+        "There was an error scheduling your appointment. Please try again.",
+        [{ text: "OK" }]
+      );
+    }
   };
   
-  // Find the full service object based on the selected ID
-  const selectedService = DUMMY_SERVICES.find(s => s._id === selectedServiceId);
+  const selectedService = services.find((s: Service) => s._id === selectedServiceId) || null;
+
+  // Show loading spinner while fetching services
+  if (servicesLoading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color="#0066cc" />
+        <Text style={styles.loadingText}>Loading services...</Text>
+      </View>
+    );
+  }
+
+  const renderStep = () => {
+    switch (step) {
+      case 0:
+        return (
+          <ServiceSelector
+            service={selectedServiceId}
+            setService={setSelectedServiceId}
+            services={services}
+            onNext={handleNext}
+          />
+        );
+      case 1:
+        return (
+          <DatePicker
+            date={selectedDate}
+            setDate={setSelectedDate}
+            onNext={handleNext}
+          />
+        );
+      case 2:
+        return (
+          <TimeSlotSelector
+            date={selectedDate}
+            time={selectedTime}
+            setTime={setSelectedTime}
+            onNext={handleNext}
+            onBack={handleBack}
+          />
+        );
+      case 3:
+        return (
+          <BookingConfirmation
+            date={selectedDate}
+            time={selectedTime}
+            service={selectedService}
+            onConfirm={handleConfirmBooking}
+            onEdit={handleEdit}
+          />
+        );
+      default:
+        return <Text>Something went wrong!</Text>;
+    }
+  };
 
   return (
-    <View className="flex-1 p-4 bg-white">
+    <View style={styles.container}>
       <BookingStepper currentStep={step} />
-
-        <DatePicker
-          date={selectedDate}
-          setDate={setSelectedDate}
-          onNext={handleNext}
-
-        <TimeSlotSelector
-          date={selectedDate}
-          time={selectedTime}
-          setTime={setSelectedTime}
-          onNext={handleNext}
-          onBack={handleBack}
-        />
-      )}
-
-      {step === 3 && (
-        <BookingConfirmation
-          date={selectedDate}
-          time={selectedTime}
-
-        />
-      )}
+      {renderStep()}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
+});

@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createSlice } from "@reduxjs/toolkit";
 
-// Initial state — will be overridden after hydration
+
 const initialState = {
   userInfo: null,
 };
@@ -20,7 +20,7 @@ const authSlice = createSlice({
             JSON.stringify(action.payload)
           );
           
-          // Also store the token separately for API requests
+          
           if (action.payload.token) {
             await AsyncStorage.setItem("token", action.payload.token);
           }

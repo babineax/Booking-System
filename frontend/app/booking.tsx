@@ -18,6 +18,7 @@ type Service = {
   price: number;
   description?: string;
   category?: string;
+  staffMembers?: string[];
 };
 
 export default function BookingPage() {
@@ -37,10 +38,32 @@ export default function BookingPage() {
 
   const handleConfirmBooking = async () => {
     try {
+      // Get the selected service to find available staff members
+      const selectedService = services.find((s: Service) => s._id === selectedServiceId);
+      
+      if (!selectedService) {
+        Alert.alert("Error", "Please select a service first.");
+        return;
+      }
+
+      if (!selectedService.staffMembers || selectedService.staffMembers.length === 0) {
+        Alert.alert("Error", "No staff members available for this service.");
+        return;
+      }
+      
+      // For now, use the first available staff member
+      // In a real app, you might want to let the user select the staff member
+      const staffMemberId = selectedService.staffMembers[0];
+      
+      // Convert time from display format to 24-hour format
+      const timeIn24Hour = convertTo24Hour(selectedTime);
+      
       const bookingData = {
         serviceId: selectedServiceId,
-        date: selectedDate,
-        time: selectedTime,
+        staffMemberId,
+        appointmentDate: new Date(selectedDate).toISOString().split('T')[0],
+        startTime: timeIn24Hour,
+        customerNotes: "",
       };
 
       await createBooking(bookingData).unwrap();
@@ -62,6 +85,19 @@ export default function BookingPage() {
         [{ text: "OK" }]
       );
     }
+  };
+
+  // Helper function to convert AM/PM time to 24-hour format
+  const convertTo24Hour = (time12h: string) => {
+    const [time, modifier] = time12h.split(' ');
+    let [hours, minutes] = time.split(':');
+    if (hours === '12') {
+      hours = '00';
+    }
+    if (modifier === 'PM') {
+      hours = (parseInt(hours, 10) + 12).toString();
+    }
+    return `${hours.padStart(2, '0')}:${minutes}`;
   };
   
   const selectedService = services.find((s: Service) => s._id === selectedServiceId) || null;
@@ -103,6 +139,7 @@ export default function BookingPage() {
             setTime={setSelectedTime}
             onNext={handleNext}
             onBack={handleBack}
+            serviceId={selectedServiceId}
           />
         );
       case 3:

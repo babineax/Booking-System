@@ -5,10 +5,12 @@ type Props = {
   date: string;
   time: string;
   service: {
-    id: string;
+    _id: string;
     name: string;
     duration: number;
     price: number;
+    description?: string;
+    category?: string;
   } | null;
   onConfirm: () => void;
   onEdit: () => void;

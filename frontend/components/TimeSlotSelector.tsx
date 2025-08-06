@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useGetAvailableSlotsQuery } from "../src/redux/apis/bookingsApiSlice";
+import { useGetServicesQuery } from "../src/redux/apis/servicesApiSlice";
 
 type Props = {
   date: string;
@@ -7,43 +8,78 @@ type Props = {
   setTime: (time: string) => void;
   onNext: () => void;
   onBack: () => void;
+  serviceId: string;
+  staffMemberId?: string;
 };
 
-const TimeSlotSelector = ({ date, time, setTime, onNext, onBack }: Props) => {
-  const [loading, setLoading] = useState(true);
-  const [slots, setSlots] = useState<string[]>([]);
+const TimeSlotSelector = ({ date, time, setTime, onNext, onBack, serviceId, staffMemberId }: Props) => {
+  
+  const { data: services = [] } = useGetServicesQuery({});
+  const selectedService = services.find((service: any) => service._id === serviceId);
+  
+  
+  const defaultStaffId = staffMemberId || selectedService?.staffMembers?.[0];
+  
+  const { 
+    data: slotsData = [], 
+    isLoading: loading, 
+    error 
+  } = useGetAvailableSlotsQuery(
+    { 
+      date: date ? new Date(date).toISOString().split('T')[0] : '', 
+      serviceId, 
+      staffMemberId: defaultStaffId 
+    },
+    { skip: !date || !serviceId || !defaultStaffId }
+  );
 
-  useEffect(() => {
-    const fetchSlots = async () => {
-      try {
-        setLoading(true);
+  // Convert API response to display format
+  const slots = slotsData.map((slot: any) => {
+    const time = new Date(`2000-01-01T${slot.startTime}`);
+    return time.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  });
 
-        // Replace with real API call later
-        // Example: `/api/bookings/available-slots?date=${date}`
-        const mockSlots = [
-          "09:00 AM", "10:00 AM", "11:30 AM", "01:00 PM", "02:30 PM", "04:00 PM",
-        ];
-
-        // Simulate network delay
-        setTimeout(() => {
-          setSlots(mockSlots);
-          setLoading(false);
-        }, 1000);
-      } catch (error) {
-        console.error("Error fetching slots:", error);
-        setLoading(false);
-      }
-    };
-
-    fetchSlots();
-  }, [date]);
+  
+  if (!defaultStaffId) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Pick a Time</Text>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>No staff members available for this service.</Text>
+        </View>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            onPress={onBack}
+            style={[styles.button, styles.backButton]}
+          >
+            <Text style={styles.backButtonText}>Back</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Pick a Time</Text>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#2563EB" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#2563EB" />
+          <Text style={styles.loadingText}>Loading available slots...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Error loading time slots. Please try again.</Text>
+        </View>
+      ) : slots.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No available time slots for this date.</Text>
+        </View>
       ) : (
         <FlatList
           data={slots}
@@ -106,6 +142,39 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1e40af',
     marginBottom: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#6b7280',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#dc2626',
+    textAlign: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#6b7280',
+    textAlign: 'center',
   },
   row: {
     justifyContent: 'space-between',

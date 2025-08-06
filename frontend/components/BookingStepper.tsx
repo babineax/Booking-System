@@ -1,4 +1,4 @@
-import { View, Text } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 // FIX 1: Update the steps array to match the new booking flow.
 const steps = ["Choose Service", "Select Date", "Pick Time", "Confirm"];
@@ -9,32 +9,28 @@ type Props = {
 
 const BookingStepper = ({ currentStep }: Props) => {
   return (
-    <View className="flex-row justify-between items-center mb-6 px-2">
+    <View style={styles.container}>
       {steps.map((label, index) => {
         const isActive = index === currentStep;
         const isCompleted = index < currentStep;
 
         return (
-          <View key={index} className="items-center flex-1">
+          <View key={index} style={styles.stepContainer}>
             <View
-              className={`w-8 h-8 rounded-full ${
-                isCompleted
-                  ? "bg-green-600"
-                  : isActive
-                  ? "bg-blue-600"
-                  : "bg-gray-300"
-              } justify-center items-center`}
+              style={[
+                styles.stepCircle,
+                isCompleted ? styles.completedCircle :
+                isActive ? styles.activeCircle : styles.inactiveCircle
+              ]}
             >
-              <Text className="text-white font-bold text-sm">{index + 1}</Text>
+              <Text style={styles.stepNumber}>{index + 1}</Text>
             </View>
             <Text
-              className={`text-xs mt-1 text-center ${
-                isActive
-                  ? "text-blue-700 font-semibold"
-                  : isCompleted
-                  ? "text-green-700"
-                  : "text-gray-400"
-              }`}
+              style={[
+                styles.stepLabel,
+                isActive ? styles.activeLabel :
+                isCompleted ? styles.completedLabel : styles.inactiveLabel
+              ]}
             >
               {label}
             </Text>
@@ -44,5 +40,55 @@ const BookingStepper = ({ currentStep }: Props) => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+    paddingHorizontal: 8,
+  },
+  stepContainer: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  stepCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  completedCircle: {
+    backgroundColor: '#16a34a',
+  },
+  activeCircle: {
+    backgroundColor: '#2563eb',
+  },
+  inactiveCircle: {
+    backgroundColor: '#d1d5db',
+  },
+  stepNumber: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  stepLabel: {
+    fontSize: 12,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  activeLabel: {
+    color: '#1d4ed8',
+    fontWeight: '600',
+  },
+  completedLabel: {
+    color: '#15803d',
+  },
+  inactiveLabel: {
+    color: '#9ca3af',
+  },
+});
 
 export default BookingStepper;

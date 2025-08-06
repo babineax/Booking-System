@@ -1,5 +1,5 @@
-import { View, Text, TouchableOpacity } from "react-native";
 import { format } from "date-fns";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 
 type Props = {
@@ -20,8 +20,8 @@ const DatePicker = ({ date, setDate, onNext }: Props) => {
     : {};
 
   return (
-    <View className="gap-4">
-      <Text className="text-xl font-bold text-blue-800">Pick a Date</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Pick a Date</Text>
 
       <Calendar
         // This marks the selected day in the calendar UI
@@ -31,20 +31,49 @@ const DatePicker = ({ date, setDate, onNext }: Props) => {
           setDate(new Date(day.dateString).toDateString());
         }}
         // Optional: you can disable past dates
-        minDate={new Date()}
+        minDate={format(new Date(), "yyyy-MM-dd")}
       />
 
       <TouchableOpacity
         disabled={!date}
         onPress={onNext}
-        className={`w-full py-3 rounded-lg ${
-          date ? "bg-blue-600" : "bg-gray-300"
-        }`}
+        style={[
+          styles.button,
+          date ? styles.enabledButton : styles.disabledButton
+        ]}
       >
-        <Text className="text-center text-white font-semibold">Next</Text>
+        <Text style={styles.buttonText}>Next</Text>
       </TouchableOpacity>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    gap: 16,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1e40af',
+    marginBottom: 16,
+  },
+  button: {
+    width: '100%',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  enabledButton: {
+    backgroundColor: '#2563eb',
+  },
+  disabledButton: {
+    backgroundColor: '#d1d5db',
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+});
 
 export default DatePicker;

@@ -1,5 +1,5 @@
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { CheckCircle2 } from "lucide-react-native";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type Props = {
   date: string;
@@ -22,51 +22,120 @@ const BookingConfirmation = ({
   onEdit,
 }: Props) => {
   return (
-    <ScrollView className="p-4 flex-1 bg-white">
-      <View className="items-center mb-6">
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
         <CheckCircle2 size={60} color="#2563EB" />
-        <Text className="text-xl font-semibold text-blue-800 mt-4">
+        <Text style={styles.title}>
           Confirm Your Booking
         </Text>
-        <Text className="text-sm text-gray-500 mt-1">
+        <Text style={styles.subtitle}>
           Review your booking details before proceeding.
         </Text>
       </View>
 
-      <View className="bg-gray-100 p-4 rounded-xl mb-4 space-y-2">
-        <Text className="text-lg font-medium text-gray-800">Service</Text>
-        <Text className="text-base text-gray-700">{service?.name}</Text>
-        <Text className="text-sm text-gray-600">
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Service</Text>
+        <Text style={styles.sectionText}>{service?.name}</Text>
+        <Text style={styles.sectionDetail}>
           Duration: {service?.duration} mins
         </Text>
-        <Text className="text-sm text-gray-600">
+        <Text style={styles.sectionDetail}>
           Price: KES {service?.price.toLocaleString()}
         </Text>
       </View>
 
-      <View className="bg-gray-100 p-4 rounded-xl mb-6 space-y-2">
-        <Text className="text-lg font-medium text-gray-800">Date & Time</Text>
-        <Text className="text-base text-gray-700">{date}</Text>
-        <Text className="text-base text-gray-700">{time}</Text>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Date & Time</Text>
+        <Text style={styles.sectionText}>{date}</Text>
+        <Text style={styles.sectionText}>{time}</Text>
       </View>
 
-      <View className="flex-row justify-between">
+      <View style={styles.buttonContainer}>
         <TouchableOpacity
           onPress={onEdit}
-          className="bg-gray-300 py-3 px-6 rounded-xl"
+          style={[styles.button, styles.editButton]}
         >
-          <Text className="text-gray-700 font-medium">Edit</Text>
+          <Text style={styles.editButtonText}>Edit</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           onPress={onConfirm}
-          className="bg-blue-700 py-3 px-6 rounded-xl"
+          style={[styles.button, styles.confirmButton]}
         >
-          <Text className="text-white font-medium">Confirm Booking</Text>
+          <Text style={styles.confirmButtonText}>Confirm Booking</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1e40af',
+    marginTop: 16,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginTop: 4,
+  },
+  section: {
+    backgroundColor: '#f3f4f6',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  sectionText: {
+    fontSize: 16,
+    color: '#374151',
+    marginBottom: 4,
+  },
+  sectionDetail: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 2,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  button: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+  },
+  editButton: {
+    backgroundColor: '#d1d5db',
+  },
+  confirmButton: {
+    backgroundColor: '#1d4ed8',
+  },
+  editButtonText: {
+    color: '#374151',
+    fontWeight: '500',
+  },
+  confirmButtonText: {
+    color: '#ffffff',
+    fontWeight: '500',
+  },
+});
 
 export default BookingConfirmation;

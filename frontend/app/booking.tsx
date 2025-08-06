@@ -1,13 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { View, Text, Alert } from "react-native";
-import { useRouter } from "expo-router"; // Import useRouter for redirection
 import BookingStepper from "@/components/BookingStepper";
 import DatePicker from "@/components/DatePicker";
-import TimeSlotSelector from "@/components/TimeSlotSelector";
 import ServiceSelector from "@/components/ServiceSelector";
-import BookingConfirmation from "@/components/BookingConfirmation";
+import TimeSlotSelector from "@/components/TimeSlotSelector";
+import { useState } from "react";
+import { View } from "react-native";
 
 // --- DUMMY DATA ---
 // We need this to simulate the full service object for the confirmation page.
@@ -51,27 +49,11 @@ export default function BookingPage() {
     <View className="flex-1 p-4 bg-white">
       <BookingStepper currentStep={step} />
 
-      {/* STEP 0: Select a Service */}
-      {step === 0 && (
-        <ServiceSelector
-          service={selectedServiceId}
-          setService={setSelectedServiceId}
-          onNext={handleNext}
-        />
-      )}
-
-      {/* STEP 1: Pick a Date */}
-      {step === 1 && (
         <DatePicker
           date={selectedDate}
           setDate={setSelectedDate}
           onNext={handleNext}
-          onBack={handleBack}
-        />
-      )}
 
-      {/* STEP 2: Choose a Time Slot */}
-      {step === 2 && (
         <TimeSlotSelector
           date={selectedDate}
           time={selectedTime}
@@ -81,14 +63,11 @@ export default function BookingPage() {
         />
       )}
 
-      {/* STEP 3: Booking Confirmation */}
       {step === 3 && (
         <BookingConfirmation
           date={selectedDate}
           time={selectedTime}
-          service={selectedService} // Pass the full service object
-          onConfirm={handleConfirmBooking} // Pass the new function
-          onEdit={handleBack} // This function already exists
+
         />
       )}
     </View>

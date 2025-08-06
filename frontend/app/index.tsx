@@ -14,14 +14,11 @@ export default function SplashScreen() {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        
         const userData = await AsyncStorage.getItem("userInfo");
         
         if (userData && userInfo) {
-          
           router.replace("/dashboard");
         } else {
-          
           router.replace("/login");
         }
       } catch (error) {
@@ -32,18 +29,29 @@ export default function SplashScreen() {
       }
     };
 
-   
-    setTimeout(() => {
+    // Add a small delay to show splash screen
+    const timer = setTimeout(() => {
       checkAuthStatus();
-    }, 2000);
-  }, [userInfo]);
+    }, 1000);
 
-  return (
-    <View className="flex-1 items-center justify-center bg-black">
-      <Text className="text-4xl font-bold text-white">Booking App 🚀</Text>
-      {isLoading && (
-        <ActivityIndicator size="large" color="#00BCD4" style={{ marginTop: 20 }} />
-      )}
-    </View>
-  );
+    return () => clearTimeout(timer);
+  }, [userInfo, router]);
+
+  if (isLoading) {
+    return (
+      <View style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#fff'
+      }}>
+        <ActivityIndicator size="large" color="#0066cc" />
+        <Text style={{ marginTop: 16, fontSize: 16, color: '#666' }}>
+          Loading...
+        </Text>
+      </View>
+    );
+  }
+
+  return null;
 }

@@ -1,47 +1,160 @@
-"use client";
+import React from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { MaterialCommunityIcons, FontAwesome } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
-import { useRouter } from "expo-router";
-import { useState } from "react";
+// Define your navigation stack types
+type AuthStackParamList = {
+  Login: undefined;
+  Signup: undefined;
+};
 
-export default function LoginScreen() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  const handleLogin = () => {
-    if (email === "admin" && password === "1234") {
-      router.replace("/dashboard");
-    } else {
-      alert("Invalid credentials");
-    }
-  };
+// Use typed navigation
+const LoginScreen = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
 
   return (
-    <View className="flex-1 items-center justify-center px-4 bg-white gap-4">
-      <Text className="text-3xl font-bold text-blue-700">Login</Text>
+    <View style={styles.container}>
+      {/* Logo */}
+      <Image source={require('../assets/images/logo.png')} style={styles.logo} />
 
-      <TextInput
-        className="w-full border border-gray-300 rounded-md p-3"
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-      />
+      <Text style={styles.title}>Login</Text>
 
-      <TextInput
-        className="w-full border border-gray-300 rounded-md p-3"
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+      {/* Email Input */}
+      <View style={styles.inputContainer}>
+        <MaterialCommunityIcons name="email-outline" size={20} color="#00BCD4" style={styles.icon} />
+        <TextInput
+          placeholder="Email Address"
+          style={styles.input}
+          placeholderTextColor="#ccc"
+          underlineColorAndroid="transparent"
+        />
+      </View>
 
-      <TouchableOpacity
-        onPress={handleLogin}
-        className="bg-blue-600 px-6 py-3 rounded-md mt-2"
-      >
-        <Text className="text-white font-semibold">Sign In</Text>
+      {/* Password Input */}
+      <View style={styles.inputContainer}>
+        <MaterialCommunityIcons name="lock-outline" size={20} color="#00BCD4" style={styles.icon} />
+        <TextInput
+          placeholder="Password"
+          secureTextEntry
+          style={styles.input}
+          placeholderTextColor="#ccc"
+          underlineColorAndroid="transparent"
+        />
+      </View>
+
+      <TouchableOpacity>
+        <Text style={styles.forgotPassword}>Forgot Password</Text>
       </TouchableOpacity>
+
+      {/* Login Button */}
+      <TouchableOpacity style={styles.loginButton}>
+        <Text style={styles.loginText}>Login</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.orText}>Or</Text>
+
+      {/* Social Login */}
+      <View style={styles.socialContainer}>
+        <TouchableOpacity>
+          <Image source={require('../assets/images/Google.png')} style={styles.socialIcon} />
+        </TouchableOpacity>
+        <TouchableOpacity>
+          <Image source={require('../assets/images/Facebook.png')} style={styles.socialIcon} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Sign Up Prompt */}
+      <Text style={styles.signupPrompt}>
+        Don’t Have an Account?{' '}
+        <Text style={styles.signupText} onPress={() => navigation.navigate('Signup')}>
+          Sign Up
+        </Text>
+      </Text>
     </View>
   );
-}
+};
+
+export default LoginScreen;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 30,
+    backgroundColor: '#fff',
+  },
+  logo: {
+    width: 60,
+    height: 60,
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderColor: '#00BCD4',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 15,
+    width: '30%',
+    height: 45,
+  },
+  icon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    height: '100%',
+    borderRadius: 8,
+    paddingHorizontal: 5,
+    fontSize: 13,
+    color: '#000',
+    marginBottom: 0,
+    paddingVertical: 10,
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    color: '#333',
+    marginBottom: 20,
+  },
+  loginButton: {
+    backgroundColor: '#00BCD4',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 80,
+    marginBottom: 20,
+  },
+  loginText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  orText: {
+    color: '#333',
+    marginBottom: 10,
+  },
+  socialContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  socialIcon: {
+    width: 40,
+    height: 40,
+    marginHorizontal: 10,
+  },
+  signupPrompt: {
+    color: '#000',
+  },
+  signupText: {
+    color: '#00BCD4',
+    fontWeight: 'bold',
+  },
+});

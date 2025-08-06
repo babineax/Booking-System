@@ -100,14 +100,15 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '500',
-    color: '#374151',
+    fontWeight: '600',
     marginBottom: 8,
+    color: '#1e40af',
   },
   sectionText: {
     fontSize: 16,
-    color: '#374151',
+    fontWeight: '500',
     marginBottom: 4,
+    color: '#374151',
   },
   sectionDetail: {
     fontSize: 14,
@@ -116,27 +117,32 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
+    gap: 12,
+    marginTop: 24,
   },
   button: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
   },
   editButton: {
-    backgroundColor: '#d1d5db',
+    backgroundColor: '#e5e7eb',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
   },
   confirmButton: {
-    backgroundColor: '#1d4ed8',
+    backgroundColor: '#2563eb',
   },
   editButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
     color: '#374151',
-    fontWeight: '500',
   },
   confirmButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
     color: '#ffffff',
-    fontWeight: '500',
   },
 });
 

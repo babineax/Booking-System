@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, FlatList, ActivityIndicator } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, StyleSheet } from "react-native";
 
 type Props = {
   date: string;
@@ -18,13 +18,10 @@ const TimeSlotSelector = ({ date, time, setTime, onNext, onBack }: Props) => {
       try {
         setLoading(true);
 
-        // Replace with real API call later
-        // Example: `/api/bookings/available-slots?date=${date}`
         const mockSlots = [
           "09:00 AM", "10:00 AM", "11:30 AM", "01:00 PM", "02:30 PM", "04:00 PM",
         ];
 
-        // Simulate network delay
         setTimeout(() => {
           setSlots(mockSlots);
           setLoading(false);
@@ -38,9 +35,32 @@ const TimeSlotSelector = ({ date, time, setTime, onNext, onBack }: Props) => {
     fetchSlots();
   }, [date]);
 
+  const renderItem = ({ item }: { item: string }) => {
+    const isSelected = time === item;
+
+    return (
+      <TouchableOpacity
+        onPress={() => setTime(item)}
+        style={[
+          styles.slotButton,
+          isSelected ? styles.slotButtonSelected : styles.slotButtonDefault,
+        ]}
+      >
+        <Text
+          style={[
+            styles.slotText,
+            isSelected ? styles.slotTextSelected : styles.slotTextDefault,
+          ]}
+        >
+          {item}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
   return (
-    <View className="gap-4">
-      <Text className="text-xl font-bold text-blue-800">Pick a Time</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Pick a Time</Text>
 
       {loading ? (
         <ActivityIndicator size="large" color="#2563EB" />
@@ -49,46 +69,103 @@ const TimeSlotSelector = ({ date, time, setTime, onNext, onBack }: Props) => {
           data={slots}
           keyExtractor={(item) => item}
           numColumns={2}
-          columnWrapperStyle={{ justifyContent: "space-between" }}
-          renderItem={({ item }) => {
-            const isSelected = time === item;
-
-            return (
-              <TouchableOpacity
-                onPress={() => setTime(item)}
-                className={`px-4 py-3 rounded-lg mb-3 w-[48%] border ${
-                  isSelected ? "bg-blue-600 border-blue-700" : "bg-white border-gray-300"
-                }`}
-              >
-                <Text className={`text-center ${isSelected ? "text-white" : "text-black"}`}>
-                  {item}
-                </Text>
-              </TouchableOpacity>
-            );
-          }}
+          columnWrapperStyle={styles.columnWrapper}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContent}
         />
       )}
 
-      <View className="flex-row justify-between mt-4">
+      <View style={styles.buttonContainer}>
         <TouchableOpacity
           onPress={onBack}
-          className="flex-1 mr-2 py-3 bg-gray-300 rounded-lg"
+          style={[styles.button, styles.backButton]}
         >
-          <Text className="text-center text-black font-medium">Back</Text>
+          <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           disabled={!time}
           onPress={onNext}
-          className={`flex-1 ml-2 py-3 rounded-lg ${
-            time ? "bg-blue-600" : "bg-gray-300"
-          }`}
+          style={[styles.button, styles.nextButton, !time && styles.nextButtonDisabled]}
         >
-          <Text className="text-center text-white font-semibold">Next</Text>
+          <Text style={styles.nextButtonText}>Next</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    gap: 16,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#1E40AF",
+  },
+  listContent: {
+    paddingVertical: 8,
+  },
+  columnWrapper: {
+    justifyContent: "space-between",
+  },
+  slotButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    width: "48%",
+    borderWidth: 1,
+  },
+  slotButtonDefault: {
+    backgroundColor: "#fff",
+    borderColor: "#D1D5DB",
+  },
+  slotButtonSelected: {
+    backgroundColor: "#2563EB",
+    borderColor: "#1D4ED8",
+  },
+  slotText: {
+    textAlign: "center",
+  },
+  slotTextDefault: {
+    color: "#000",
+  },
+  slotTextSelected: {
+    color: "#fff",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 16,
+  },
+  button: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  backButton: {
+    marginRight: 8,
+    backgroundColor: "#D1D5DB",
+  },
+  backButtonText: {
+    color: "#000",
+    fontWeight: "500",
+  },
+  nextButton: {
+    marginLeft: 8,
+    backgroundColor: "#2563EB",
+  },
+  nextButtonDisabled: {
+    backgroundColor: "#D1D5DB",
+  },
+  nextButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+});
 
 export default TimeSlotSelector;

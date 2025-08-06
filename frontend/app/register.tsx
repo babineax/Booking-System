@@ -1,6 +1,9 @@
+import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Button, Text, TextInput, View } from "react-native";
-import { useRegisterMutation } from "../app/redux/apis/usersApiSlice";
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useDispatch } from "react-redux";
+import { useRegisterMutation } from "../src/redux/apis/usersApiSlice";
+import { setCredentials } from "../src/redux/features/auth/authSlice";
 
 type RegisterForm = {
   username: string;
@@ -14,6 +17,9 @@ type RegisterForm = {
 type FormField = keyof RegisterForm;
 
 const RegisterScreen = () => {
+  const router = useRouter();
+  const dispatch = useDispatch();
+  
   const [form, setForm] = useState<RegisterForm>({
     username: "",
     email: "",
@@ -23,6 +29,7 @@ const RegisterScreen = () => {
     phone: "",
     role: "customer",
   });
+  
   const fields: FormField[] = [
     "username",
     "email",
@@ -32,16 +39,27 @@ const RegisterScreen = () => {
     "phone",
   ];
 
-  const [register, { isLoading, error }] = useRegisterMutation();
+  const [register, { isLoading }] = useRegisterMutation();
 
   const handleSubmit = async () => {
+    // Basic validation
+    if (!form.username || !form.email || !form.password || !form.firstName || !form.lastName) {
+      Alert.alert("Error", "Please fill in all required fields");
+      return;
+    }
+
     try {
-      const res = await register(form).unwrap();
-      console.log("User registered:", res);
-      alert("Registered successfully!");
-    } catch (err) {
-      console.error("Error:", err);
-      alert("Registration failed");
+      const userData = await register(form).unwrap();
+      dispatch(setCredentials(userData));
+      
+      Alert.alert("Success", "Registration successful!", [
+        {
+          text: "OK",
+          onPress: () => router.replace("/dashboard"),
+        }
+      ]);
+    } catch (error: any) {
+      Alert.alert("Registration Failed", error?.data?.message || "Registration failed. Please try again.");
     }
   };
 
@@ -59,12 +77,43 @@ const RegisterScreen = () => {
           style={{ borderBottomWidth: 1, marginBottom: 10 }}
         />
       ))}
-      <Button title="Register" onPress={handleSubmit} disabled={isLoading} />
-      {error && (
-        <Text style={{ color: "red" }}>Error: {JSON.stringify(error)}</Text>
-      )}
+      
+      <TouchableOpacity 
+        style={styles.registerButton} 
+        onPress={handleSubmit} 
+        disabled={isLoading}
+      >
+        <Text style={styles.buttonText}>
+          {isLoading ? "Registering..." : "Register"}
+        </Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity onPress={() => router.push('/login')}>
+        <Text style={styles.loginLink}>Already have an account? Login</Text>
+      </TouchableOpacity>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  registerButton: {
+    backgroundColor: '#00BCD4',
+    borderRadius: 25,
+    paddingVertical: 15,
+    paddingHorizontal: 40,
+    marginVertical: 20,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  loginLink: {
+    color: '#00BCD4',
+    textAlign: 'center',
+    marginTop: 10,
+  },
+});
 
 export default RegisterScreen;

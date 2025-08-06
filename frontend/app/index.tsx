@@ -1,7 +1,5 @@
-"use client";
-
-import { useEffect } from "react";
-import { View, Text } from "react-native";
+import React, { useEffect } from "react";
+import { View, Text, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 
 export default function SplashScreen() {
@@ -9,19 +7,33 @@ export default function SplashScreen() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-    // router.replace("/booking"); // redirect to login screen
-    //router.replace("/services");
-    //router.replace("/login");
-    router.replace("/signup");
-    
+      // You can uncomment and choose which route to redirect to
+      // router.replace("/booking");
+      // router.replace("/services");
+      // router.replace("/login");
+      router.replace("/signup");
     }, 2000);
 
     return () => clearTimeout(timer);
   }, []);
 
   return (
-    <View className="flex-1 items-center justify-center bg-black">
-      <Text className="text-4xl font-bold text-white">MyApp 🚀</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Booking System</Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF", 
+  },
+  title: {
+    fontSize: 40,
+    fontWeight: "bold",
+    color: "#1D4ED8", 
+  },
+});

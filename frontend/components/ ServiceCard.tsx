@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, View, Text } from 'react-native';
+import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 
 type Service = {
   id: string;
@@ -17,21 +17,52 @@ type Props = {
 export default function ServiceCard({ service, onPress }: Props) {
   return (
     <TouchableOpacity
-      className="bg-white rounded-lg p-4 mb-3 shadow"
+      style={styles.card}
       onPress={() => onPress(service)}
     >
-      <Text className="text-xl font-semibold">{service.name}</Text>
+      <Text style={styles.title}>{service.name}</Text>
       {service.description ? (
-        <Text className="text-gray-600 mt-1">{service.description}</Text>
+        <Text style={styles.description}>{service.description}</Text>
       ) : null}
-      <View className="flex-row justify-between mt-2">
+      <View style={styles.detailsContainer}>
         {service.duration ? (
-          <Text className="text-sm text-gray-500">⏱ {service.duration}</Text>
+          <Text style={styles.detailText}>⏱ {service.duration}</Text>
         ) : null}
         {service.price ? (
-          <Text className="text-sm text-gray-500">💰 {service.price}</Text>
+          <Text style={styles.detailText}>💰 {service.price}</Text>
         ) : null}
       </View>
     </TouchableOpacity>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  description: {
+    color: '#6b7280',
+    marginTop: 4,
+  },
+  detailsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  detailText: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+});

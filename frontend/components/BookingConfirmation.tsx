@@ -1,19 +1,17 @@
-import React from "react";
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import { CheckCircle2 } from "lucide-react-native";
-
-// --- FIX: Change 'id' to '_id' in the Service type definition ---
-type Service = {
-  _id: string; // Updated from 'id'
-  name: string;
-  duration: number;
-  price: number;
-};
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type Props = {
   date: string;
   time: string;
-  service: Service | null;
+  service: {
+    _id: string;
+    name: string;
+    duration: number;
+    price: number;
+    description?: string;
+    category?: string;
+  } | null;
   onConfirm: () => void;
   onEdit: () => void;
 };
@@ -27,39 +25,46 @@ const BookingConfirmation = ({
 }: Props) => {
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.headerContainer}>
-        <CheckCircle2 size={60} color="#1E3A8A" />
-        <Text style={styles.headerTitle}>Confirm Your Booking</Text>
-        <Text style={styles.headerSubtitle}>
+      <View style={styles.header}>
+        <CheckCircle2 size={60} color="#2563EB" />
+        <Text style={styles.title}>
+          Confirm Your Booking
+        </Text>
+        <Text style={styles.subtitle}>
           Review your booking details before proceeding.
         </Text>
       </View>
 
-      <View style={styles.detailsBox}>
-        <Text style={styles.detailsTitle}>Service</Text>
-        {/* No change needed here, as optional chaining handles the null case */}
-        <Text style={styles.detailsText}>{service?.name}</Text>
-        <Text style={styles.detailsSubtitle}>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Service</Text>
+        <Text style={styles.sectionText}>{service?.name}</Text>
+        <Text style={styles.sectionDetail}>
           Duration: {service?.duration} mins
         </Text>
-        <Text style={styles.detailsSubtitle}>
+        <Text style={styles.sectionDetail}>
           Price: KES {service?.price.toLocaleString()}
         </Text>
       </View>
 
-      <View style={styles.detailsBox}>
-        <Text style={styles.detailsTitle}>Date & Time</Text>
-        <Text style={styles.detailsText}>{date}</Text>
-        <Text style={styles.detailsText}>{time}</Text>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Date & Time</Text>
+        <Text style={styles.sectionText}>{date}</Text>
+        <Text style={styles.sectionText}>{time}</Text>
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={onEdit} style={[styles.button, styles.editButton]}>
-          <Text style={styles.editText}>Edit</Text>
+        <TouchableOpacity
+          onPress={onEdit}
+          style={[styles.button, styles.editButton]}
+        >
+          <Text style={styles.editButtonText}>Edit</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={onConfirm} style={[styles.button, styles.confirmButton]}>
-          <Text style={styles.confirmText}>Confirm Booking</Text>
+        <TouchableOpacity
+          onPress={onConfirm}
+          style={[styles.button, styles.confirmButton]}
+        >
+          <Text style={styles.confirmButtonText}>Confirm Booking</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -68,72 +73,76 @@ const BookingConfirmation = ({
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: "#fff",
     padding: 16,
+    flex: 1,
+    backgroundColor: '#ffffff',
   },
-  headerContainer: {
-    alignItems: "center",
+  header: {
+    alignItems: 'center',
     marginBottom: 24,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: "#1E40AF",
+  title: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1e40af',
     marginTop: 16,
   },
-  headerSubtitle: {
+  subtitle: {
     fontSize: 14,
-    color: "#6B7280",
+    color: '#6b7280',
     marginTop: 4,
   },
-  detailsBox: {
-    backgroundColor: "#F3F4F6",
+  section: {
+    backgroundColor: '#f3f4f6',
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
   },
-  detailsTitle: {
+  sectionTitle: {
     fontSize: 18,
-    fontWeight: "500",
-    color: "#1F2937",
-    marginBottom: 4,
+    fontWeight: '600',
+    marginBottom: 8,
+    color: '#1e40af',
   },
-  detailsText: {
+  sectionText: {
     fontSize: 16,
-    color: "#374151",
+    fontWeight: '500',
+    marginBottom: 4,
+    color: '#374151',
   },
-  detailsSubtitle: {
+  sectionDetail: {
     fontSize: 14,
-    color: "#4B5563",
-    marginTop: 2,
+    color: '#6b7280',
+    marginBottom: 2,
   },
   buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    gap: 12,
     marginTop: 24,
   },
   button: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
     flex: 1,
-    marginHorizontal: 4,
-    alignItems: "center",
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
   },
   editButton: {
-    backgroundColor: "#D1D5DB",
+    backgroundColor: '#e5e7eb',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
   },
   confirmButton: {
-    backgroundColor: "#1D4ED8",
+    backgroundColor: '#2563eb',
   },
-  editText: {
-    color: "#374151",
-    fontWeight: "600",
+  editButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
   },
-  confirmText: {
-    color: "#FFFFFF",
-    fontWeight: "600",
+  confirmButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
   },
 });
 

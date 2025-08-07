@@ -51,9 +51,8 @@ export const bookingsApiSlice = apiSlice.injectEndpoints({
     }),
 
     getAvailableSlots: builder.query({
-      query: (params) => ({
-        url: `${BOOKINGS_URL}/available-slots`,
-        params,
+      query: ({ date, serviceId, staffMemberId }) => ({
+        url: `${BOOKINGS_URL}/available-slots?date=${date}&serviceId=${serviceId}&staffMemberId=${staffMemberId}`,
       }),
     }),
   }),

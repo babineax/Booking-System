@@ -1,33 +1,36 @@
-'use client';
-import { View, Text, Button } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-
-type Service = {
-  id: number;
-  name: string;
-  description: string;
-  duration: number;
-  price: number;
-};
+"use client";
+import { useGetServiceByIdQuery } from "@/src/redux/apis/servicesApiSlice";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { Button, Text, View } from "react-native";
 
 export default function ServiceDetailScreen() {
   const { serviceId } = useLocalSearchParams();
   const router = useRouter();
-  const [service, setService] = useState<Service | null>(null);
+  const {
+    data: service,
+    isLoading,
+    isError,
+    error,
+  } = useGetServiceByIdQuery(serviceId as string, {
+    skip: !serviceId, // Don't run query if ID is undefined
+  });
 
-  useEffect(() => {
-    if (!serviceId) return;
+  if (isLoading) {
+    return <Text className="mt-20 text-center">Loading...</Text>;
+  }
 
-    fetch(`https://your-api.com/services/${serviceId}`)
-      .then(res => res.json())
-      .then(data => setService(data))
-      .catch(err => {
-        console.error("Failed to fetch service:", err);
-      });
-  }, [serviceId]);
+  if (isError) {
+    console.error("Failed to fetch service:", error);
+    return (
+      <Text className="mt-20 text-center text-red-500">
+        Failed to load service.
+      </Text>
+    );
+  }
 
-  if (!service) return <Text className="mt-20 text-center">Loading...</Text>;
+  if (!service) {
+    return <Text className="mt-20 text-center">No service found.</Text>;
+  }
 
   return (
     <View className="flex-1 p-4 bg-white">
@@ -36,7 +39,10 @@ export default function ServiceDetailScreen() {
       <Text className="mt-4 text-lg">{service.duration} minutes</Text>
       <Text className="text-xl font-bold text-blue-700">${service.price}</Text>
 
-      <Button title="Book Now" onPress={() => router.push(`/book/${service.id}`)} />
+      <Button
+        title="Book Now"
+        onPress={() => router.push(`/book/${service.id}`)}
+      />
     </View>
   );
 }

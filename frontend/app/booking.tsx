@@ -8,6 +8,7 @@ import TimeSlotSelector from "@/components/TimeSlotSelector";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
+import Toast from "react-native-toast-message";
 import { useCreateBookingMutation } from "../src/redux/apis/bookingsApiSlice";
 import { useGetServicesQuery } from "../src/redux/apis/servicesApiSlice";
 
@@ -28,9 +29,13 @@ export default function BookingPage() {
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedServiceId, setSelectedServiceId] = useState("");
 
-  
-  const { data: services = [], isLoading: servicesLoading, error: servicesError } = useGetServicesQuery({});
-  const [createBooking, { isLoading: bookingLoading }] = useCreateBookingMutation();
+  const {
+    data: services = [],
+    isLoading: servicesLoading,
+    error: servicesError,
+  } = useGetServicesQuery({});
+  const [createBooking, { isLoading: bookingLoading }] =
+    useCreateBookingMutation();
 
   const handleNext = () => setStep((prev) => prev + 1);
   const handleBack = () => setStep((prev) => prev - 1);
@@ -38,70 +43,72 @@ export default function BookingPage() {
 
   const handleConfirmBooking = async () => {
     try {
-      
-      const selectedService = services.find((s: Service) => s._id === selectedServiceId);
-      
+      const selectedService = services.find(
+        (s: Service) => s._id === selectedServiceId
+      );
+
       if (!selectedService) {
         Alert.alert("Error", "Please select a service first.");
         return;
       }
 
-      if (!selectedService.staffMembers || selectedService.staffMembers.length === 0) {
+      if (
+        !selectedService.staffMembers ||
+        selectedService.staffMembers.length === 0
+      ) {
         Alert.alert("Error", "No staff members available for this service.");
         return;
       }
-      
-      
-      const staffMemberId = selectedService.staffMembers[0]?._id || selectedService.staffMembers[0];
-      
-    
+
+      const staffMemberId =
+        selectedService.staffMembers[0]?._id || selectedService.staffMembers[0];
+
       const timeIn24Hour = convertTo24Hour(selectedTime);
-      
+
       const bookingData = {
         serviceId: selectedServiceId,
         staffMemberId,
-        appointmentDate: new Date(selectedDate).toISOString().split('T')[0],
+        appointmentDate: new Date(selectedDate).toISOString().split("T")[0],
         startTime: timeIn24Hour,
         customerNotes: "",
       };
 
       await createBooking(bookingData).unwrap();
-      
-      Alert.alert(
-        "Booking Confirmed!",
-        "Your appointment has been successfully scheduled. We will send you a confirmation email shortly.",
-        [
-          {
-            text: "OK",
-            onPress: () => router.replace('/'),
-          },
-        ]
-      );
+
+      Toast.show({
+        type: "success",
+        text1: "Booking Confirmed!",
+        text2: "You’ll get a confirmation email shortly.",
+      });
+
+      setTimeout(() => {
+        router.replace("/");
+      }, 2000);
     } catch (error) {
-      Alert.alert(
-        "Booking Failed",
-        "There was an error scheduling your appointment. Please try again.",
-        [{ text: "OK" }]
-      );
+      console.error(error);
+      Toast.show({
+        type: "error",
+        text1: "Booking Failed",
+        text2: "Please try again later.",
+      });
     }
   };
 
-  
   const convertTo24Hour = (time12h: string) => {
-    const [time, modifier] = time12h.split(' ');
-    let [hours, minutes] = time.split(':');
-    if (hours === '12') {
-      hours = '00';
+    const [time, modifier] = time12h.split(" ");
+    let [hours, minutes] = time.split(":");
+    if (hours === "12") {
+      hours = "00";
     }
-    if (modifier === 'PM') {
+    if (modifier === "PM") {
       hours = (parseInt(hours, 10) + 12).toString();
     }
-    return `${hours.padStart(2, '0')}:${minutes}`;
+    return `${hours.padStart(2, "0")}:${minutes}`;
   };
-  
-  const selectedService = services.find((s: Service) => s._id === selectedServiceId) || null;
 
- 
+  const selectedService =
+    services.find((s: Service) => s._id === selectedServiceId) || null;
+
   if (servicesLoading) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
@@ -160,6 +167,7 @@ export default function BookingPage() {
     <View style={styles.container}>
       <BookingStepper currentStep={step} />
       {renderStep()}
+      <Toast position="top" visibilityTime={3000} />
     </View>
   );
 }
@@ -168,15 +176,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   loadingContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
 });

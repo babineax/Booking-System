@@ -1,16 +1,12 @@
-
 const getBaseUrl = () => {
-  
-  if (process.env.EXPO_PUBLIC_API_BASE_URL) {
-    return process.env.EXPO_PUBLIC_API_BASE_URL;
+  if (process.env.MONGO_URI) {
+    return process.env.MONGO_URI;
   }
-  
-  
+
   if (__DEV__) {
-    return "http://localhost:3001";
+    return "http://localhost:5000";
   }
-  
-  
+
   return "https://prod-api";
 };
 

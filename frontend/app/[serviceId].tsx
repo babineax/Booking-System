@@ -39,10 +39,7 @@ export default function ServiceDetailScreen() {
       <Text className="mt-4 text-lg">{service.duration} minutes</Text>
       <Text className="text-xl font-bold text-blue-700">${service.price}</Text>
 
-      <Button
-        title="Book Now"
-        onPress={() => router.push(`/booking/${service.id}`)}
-      />
+      <Button title="Book Now" onPress={() => router.push(`/booking`)} />
     </View>
   );
 }

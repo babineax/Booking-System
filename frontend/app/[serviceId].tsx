@@ -41,7 +41,7 @@ export default function ServiceDetailScreen() {
 
       <Button
         title="Book Now"
-        onPress={() => router.push(`/book/${service.id}`)}
+        onPress={() => router.push(`/booking/${service.id}`)}
       />
     </View>
   );

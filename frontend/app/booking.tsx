@@ -28,7 +28,7 @@ export default function BookingPage() {
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedServiceId, setSelectedServiceId] = useState("");
 
-  // Redux queries for real data
+  
   const { data: services = [], isLoading: servicesLoading, error: servicesError } = useGetServicesQuery({});
   const [createBooking, { isLoading: bookingLoading }] = useCreateBookingMutation();
 
@@ -38,7 +38,7 @@ export default function BookingPage() {
 
   const handleConfirmBooking = async () => {
     try {
-      // Get the selected service to find available staff members
+      
       const selectedService = services.find((s: Service) => s._id === selectedServiceId);
       
       if (!selectedService) {
@@ -51,11 +51,10 @@ export default function BookingPage() {
         return;
       }
       
-      // For now, use the first available staff member
-      // In a real app, you might want to let the user select the staff member
-      const staffMemberId = selectedService.staffMembers[0];
       
-      // Convert time from display format to 24-hour format
+      const staffMemberId = selectedService.staffMembers[0]?._id || selectedService.staffMembers[0];
+      
+    
       const timeIn24Hour = convertTo24Hour(selectedTime);
       
       const bookingData = {
@@ -87,7 +86,7 @@ export default function BookingPage() {
     }
   };
 
-  // Helper function to convert AM/PM time to 24-hour format
+  
   const convertTo24Hour = (time12h: string) => {
     const [time, modifier] = time12h.split(' ');
     let [hours, minutes] = time.split(':');
@@ -102,7 +101,7 @@ export default function BookingPage() {
   
   const selectedService = services.find((s: Service) => s._id === selectedServiceId) || null;
 
-  // Show loading spinner while fetching services
+ 
   if (servicesLoading) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>

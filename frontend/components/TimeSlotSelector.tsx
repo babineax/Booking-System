@@ -17,8 +17,18 @@ const TimeSlotSelector = ({ date, time, setTime, onNext, onBack, serviceId, staf
   const { data: services = [] } = useGetServicesQuery({});
   const selectedService = services.find((service: any) => service._id === serviceId);
   
+ 
+  const defaultStaffId = staffMemberId || 
+    (selectedService?.staffMembers?.[0]?._id || selectedService?.staffMembers?.[0]);
   
-  const defaultStaffId = staffMemberId || selectedService?.staffMembers?.[0];
+ 
+  console.log('TimeSlotSelector Debug:', {
+    date: date ? new Date(date).toISOString().split('T')[0] : '',
+    serviceId,
+    defaultStaffId,
+    selectedService: selectedService?.name,
+    staffMembers: selectedService?.staffMembers
+  });
   
   const { 
     data: slotsData = [], 
@@ -33,7 +43,7 @@ const TimeSlotSelector = ({ date, time, setTime, onNext, onBack, serviceId, staf
     { skip: !date || !serviceId || !defaultStaffId }
   );
 
-  // Convert API response to display format
+  
   const slots = slotsData.map((slot: any) => {
     const time = new Date(`2000-01-01T${slot.startTime}`);
     return time.toLocaleTimeString('en-US', { 

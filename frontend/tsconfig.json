@@ -1,5 +1,5 @@
 {
-  "extends": "expo/tsconfig.base",
+  
   "compilerOptions": {
     "strict": true,
     "jsx": "react-jsx",
@@ -10,10 +10,15 @@
     "resolveJsonModule": true,
     "noEmit": true,
     "isolatedModules": true,
+    
+    "types": [
+      "react",
+      "react-native",
+      "expo",
+      "nativewind/types"
+    ],
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     }
   },
   "include": [
@@ -21,9 +26,8 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "nativewind-env.d.ts"
+    "nativewind-env.d.ts",
+    "types/**/*.d.ts"
   ],
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"]
 }

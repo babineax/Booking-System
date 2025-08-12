@@ -6,6 +6,7 @@ import { Button, Text, View } from "react-native";
 export default function ServiceDetailScreen() {
   const { serviceId } = useLocalSearchParams();
   const router = useRouter();
+
   const {
     data: service,
     isLoading,
@@ -38,7 +39,7 @@ export default function ServiceDetailScreen() {
       <Text className="text-gray-700 mt-2">{service.description}</Text>
       <Text className="mt-4 text-lg">{service.duration} minutes</Text>
       <Text className="text-xl font-bold text-blue-700">${service.price}</Text>
-
+      {/* hii button inafaa kubook a service by its Id  */}
       <Button title="Book Now" onPress={() => router.push(`/booking`)} />
     </View>
   );

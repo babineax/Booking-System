@@ -1,15 +1,35 @@
-"use client";
+// "use client";
 
 import ApiDebugComponent from "@/components/ApiDebugComponent";
 import { useRouter } from "expo-router";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { logout } from "../src/redux/features/auth/authSlice";
+// NOTE: If you are still seeing the "Cannot find module" error,
+// please double-check this file path to ensure it's correct for your project structure.
+import { logout } from "@/src/redux/features/auth/authSlice";
+
+// We'll define a type for the Redux state to fix the "unknown" error.
+// This assumes your Redux store has an 'auth' slice with a 'userInfo' object.
+type RootState = {
+  auth: {
+    userInfo: {
+      firstName: string;
+      username: string;
+      // You can add other user info properties here
+    };
+    // Other properties of the auth slice go here
+  };
+  // Other slices in your Redux store go here
+};
 
 export default function DashboardScreen() {
   const router = useRouter();
   const dispatch = useDispatch();
-  const userInfo = useSelector((state: any) => state.auth.userInfo);
+
+  // We now provide the RootState type to the useSelector hook.
+  // This tells TypeScript the structure of the state,
+  // resolving the 'state is of type unknown' error.
+  const userInfo = useSelector((state: RootState) => state.auth.userInfo);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -47,8 +67,8 @@ export default function DashboardScreen() {
           <Text style={styles.buttonText}>Logout</Text>
         </TouchableOpacity>
       </View>
-       
-      {/* <ApiDebugComponent /> */} {/* Uncomment for debugging API calls */}
+      
+      {/* <ApiDebugComponent /> */}
     </View>
   );
 }

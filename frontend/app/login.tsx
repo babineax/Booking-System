@@ -23,13 +23,20 @@ const LoginScreen = () => {
     try {
       console.log('Attempting login...');
       const userData = await login({ email, password }).unwrap();
+      // Safely get the role and convert it to lowercase for reliable comparison
+      const userRole = userData.user?.role?.toLowerCase(); 
       console.log('Login successful, userData:', userData);
       
       dispatch(setCredentials(userData));
       console.log('Credentials set, navigating to dashboard...');
       
-      
-      router.push('/dashboard');
+      // Navigate to the correct dashboard based on the user's role
+      if (userRole === 'admin') {
+        router.replace('/(admin)');
+      } else {
+        router.replace('/(app)');
+      }
+
       console.log('Navigation called');
       
     } catch (error: any) {

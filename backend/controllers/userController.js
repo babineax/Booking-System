@@ -4,56 +4,62 @@ import User from "../models/userModel.js";
 import createToken from "../utils/createToken.js";
 
 const createUser = asyncHandler(async (req, res) => {
-  const { username, email, password, firstName, lastName, phone, role } =
-    req.body;
+  const { username, email, password, firstName, lastName, phone, role } =
+    req.body;
 
-  if (!username || !email || !password || !firstName || !lastName) {
-    throw new Error("Please fill all the required inputs");
-  }
+  if (!username || !email || !password || !firstName || !lastName) {
+    throw new Error("Please fill all the required inputs");
+  }
 
-  const userExists = await User.findOne({ email });
+  const userExists = await User.findOne({ email });
 
-  if (userExists) {
-    res.status(400);
-    throw new Error("User already exists");
-  }
+  if (userExists) {
+    res.status(400);
+    throw new Error("User already exists");
+  }
 
-  const salt = await bcrypt.genSalt(10);
-  const hashpassword = await bcrypt.hash(password, salt);
+  const salt = await bcrypt.genSalt(10);
+  const hashpassword = await bcrypt.hash(password, salt);
 
-  const newUser = new User({
-    username,
-    email,
-    password: hashpassword,
-    firstName,
-    lastName,
-    phone,
-    role: role || "customer",
-  });
+  const newUser = new User({
+    username,
+    email,
+    password: hashpassword,
+    firstName,
+    lastName,
+    phone,
+    role: role || "customer",
+  });
 
-  try {
-    await newUser.save();
-    const token = createToken(res, newUser._id);
+  try {
+    await newUser.save();
+    const token = createToken(res, newUser._id);
+    const isAdmin = newUser.role === "admin";
 
-    res.status(201).json({
-      _id: newUser._id,
-      username: newUser.username,
-      email: newUser.email,
-      firstName: newUser.firstName,
-      lastName: newUser.lastName,
-      phone: newUser.phone,
-      role: newUser.role,
-      isAdmin: newUser.isAdmin,
-      token,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(400);
-    throw new Error("Invalid user data");
-  }
+    res.status(201).json({
+      _id: newUser._id,
+      username: newUser.username,
+      email: newUser.email,
+      firstName: newUser.firstName,
+      lastName: newUser.lastName,
+      phone: newUser.phone,
+      role: newUser.role,
+      isAdmin,
+      token,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(400);
+    throw new Error("Invalid user data");
+  }
 });
 
 const loginUser = asyncHandler(async (req, res) => {
+  if (!req.body || !req.body.email || !req.body.password) {
+    res.status(400);
+    throw new Error("Please provide both email and password.");
+  }
+
   const { email, password } = req.body;
 
   const existingUser = await User.findOne({ email });
@@ -63,10 +69,13 @@ const loginUser = asyncHandler(async (req, res) => {
       password,
       existingUser.password
     );
+
     if (isPasswordValid) {
       const token = createToken(res, existingUser._id);
-
-      res.status(201).json({
+      
+      // FINAL FIX: Manually construct a clean object for the response
+      // This bypasses any Mongoose document complexities
+      const responseData = {
         _id: existingUser._id,
         username: existingUser.username,
         email: existingUser.email,
@@ -74,9 +83,11 @@ const loginUser = asyncHandler(async (req, res) => {
         lastName: existingUser.lastName,
         phone: existingUser.phone,
         role: existingUser.role,
-        isAdmin: existingUser.isAdmin,
+        isAdmin: existingUser.role === "admin", // Derive isAdmin directly
         token,
-      });
+      };
+
+      res.status(201).json(responseData);
       return;
     }
   }
@@ -86,18 +97,20 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const logoutCurrentUser = asyncHandler(async (req, res) => {
-  res.cookie("jwt", "", {
-    httpOnly: true,
-    expires: new Date(0),
-  });
-  res.status(200).json("logged out successfully");
+  res.cookie("jwt", "", {
+    httpOnly: true,
+    expires: new Date(0),
+  });
+  res.status(200).json("logged out successfully");
 });
 
 const getUserProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).select("-password");
+  // Use .lean() to get a plain JavaScript object from the database query
+  const user = await User.findById(req.user._id).select("-password").lean();
 
   if (user) {
-    res.json(user);
+    const isAdmin = user.role === "admin";
+    res.json({ ...user, isAdmin });
   } else {
     res.status(404);
     throw new Error("User not found");
@@ -105,75 +118,76 @@ const getUserProfile = asyncHandler(async (req, res) => {
 });
 
 const updateUserProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
+  const user = await User.findById(req.user._id);
 
-  if (user) {
-    user.firstName = req.body.firstName || user.firstName;
-    user.lastName = req.body.lastName || user.lastName;
-    user.email = req.body.email || user.email;
-    user.phone = req.body.phone || user.phone;
-    user.username = req.body.username || user.username;
+  if (user) {
+    user.firstName = req.body.firstName || user.firstName;
+    user.lastName = req.body.lastName || user.lastName;
+    user.email = req.body.email || user.email;
+    user.phone = req.body.phone || user.phone;
+    user.username = req.body.username || user.username;
 
-    if (req.body.password) {
-      const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(req.body.password, salt);
-    }
+    if (req.body.password) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(req.body.password, salt);
+    }
 
-    const updatedUser = await user.save();
+    const updatedUser = await user.save();
+    const isAdmin = updatedUser.role === "admin";
 
-    res.json({
-      _id: updatedUser._id,
-      username: updatedUser.username,
-      email: updatedUser.email,
-      firstName: updatedUser.firstName,
-      lastName: updatedUser.lastName,
-      phone: updatedUser.phone,
-      role: updatedUser.role,
-      isAdmin: updatedUser.isAdmin,
-    });
-  } else {
-    res.status(404);
-    throw new Error("User not found");
-  }
+    res.json({
+      _id: updatedUser._id,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      phone: updatedUser.phone,
+      role: updatedUser.role,
+      isAdmin,
+    });
+  } else {
+    res.status(404);
+    throw new Error("User not found");
+  }
 });
 
 const getStaffMembers = asyncHandler(async (req, res) => {
-  const staff = await User.find({
-    role: "staff",
-    isActive: true,
-  }).select("-password");
+  const staff = await User.find({
+    role: "staff",
+    isActive: true,
+  }).select("-password");
 
-  res.json(staff);
+  res.json(staff);
 });
 
 const getUsers = asyncHandler(async (req, res) => {
-  const users = await User.find({}).select("-password");
-  res.json(users);
+  const users = await User.find({}).select("-password");
+  res.json(users);
 });
 
 const deleteUserById = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id);
+  const user = await User.findById(req.params.id);
 
-  if (user) {
-    if (user.isAdmin) {
-      res.status(404);
-      throw new Error("an admin cannot be deleted");
-    }
-    await User.deleteOne({ _id: user._id });
-    res.json({ message: "user removed" });
-  } else {
-    res.status(404);
-    throw new Error("users not found");
-  }
+  if (user) {
+    if (user.isAdmin) {
+      res.status(404);
+      throw new Error("an admin cannot be deleted");
+    }
+    await User.deleteOne({ _id: user._id });
+    res.json({ message: "user removed" });
+  } else {
+    res.status(404);
+    throw new Error("users not found");
+  }
 });
 
 export {
-  createUser,
-  deleteUserById,
-  getStaffMembers,
-  getUserProfile,
-  getUsers,
-  loginUser,
-  logoutCurrentUser,
-  updateUserProfile,
+  createUser,
+  deleteUserById,
+  getStaffMembers,
+  getUserProfile,
+  getUsers,
+  loginUser,
+  logoutCurrentUser,
+  updateUserProfile,
 };

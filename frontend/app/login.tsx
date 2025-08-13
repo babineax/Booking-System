@@ -1,3 +1,5 @@
+// File: frontend/app/login.tsx
+
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -5,6 +7,25 @@ import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } fro
 import { useDispatch } from 'react-redux';
 import { useLoginMutation } from '../src/redux/apis/usersApiSlice';
 import { setCredentials } from '../src/redux/features/auth/authSlice';
+import { FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
+
+// Define a type for the expected server error response
+interface ApiError {
+  message: string;
+}
+
+// A more robust type guard that checks if the error contains a data object with a message property.
+function isApiErrorWithData(error: any): error is { data: ApiError } {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'data' in error &&
+    typeof (error as any).data === 'object' &&
+    (error as any).data !== null &&
+    'message' in (error as any).data &&
+    typeof (error as any).data.message === 'string'
+  );
+}
 
 const LoginScreen = () => {
   const router = useRouter();
@@ -23,18 +44,28 @@ const LoginScreen = () => {
     try {
       console.log('Attempting login...');
       const userData = await login({ email, password }).unwrap();
+      
       console.log('Login successful, userData:', userData);
       
       dispatch(setCredentials(userData));
-      console.log('Credentials set, navigating to dashboard...');
+      console.log('Credentials set, navigating...');
       
-      
-      router.push('/dashboard');
-      console.log('Navigation called');
-      
+      if (userData.isAdmin) {
+        router.replace('/(admin)');
+      } else {
+        router.replace('/(app)');
+      }
+
     } catch (error: any) {
       console.error('Login error:', error);
-      Alert.alert('Login Failed', error?.data?.message || 'Login failed. Please try again.');
+      
+      let errorMessage = 'Login failed. Please try again.';
+      // Use the new, more specific type guard
+      if (isApiErrorWithData(error)) {
+        errorMessage = error.data.message;
+      }
+      
+      Alert.alert('Login Failed', errorMessage);
     }
   };
 

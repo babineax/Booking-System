@@ -33,6 +33,13 @@ const seedData = {
       lastName: 'Doe',
       phone: '+1234567892',
       role: 'customer',
+      preferences: {
+        favoriteServices: [],
+        communicationPreferences: {
+          email: true,
+          sms: false
+        }
+      },
     },
   ],
   

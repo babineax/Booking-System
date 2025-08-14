@@ -5,35 +5,15 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useDispatch } from 'react-redux';
-import { useLoginMutation } from '../src/redux/apis/usersApiSlice';
+import { userService } from '../firebase/services/userService';
 import { setCredentials } from '../src/redux/features/auth/authSlice';
-import { FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
-
-// Define a type for the expected server error response
-interface ApiError {
-  message: string;
-}
-
-// A more robust type guard that checks if the error contains a data object with a message property.
-function isApiErrorWithData(error: any): error is { data: ApiError } {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'data' in error &&
-    typeof (error as any).data === 'object' &&
-    (error as any).data !== null &&
-    'message' in (error as any).data &&
-    typeof (error as any).data.message === 'string'
-  );
-}
 
 const LoginScreen = () => {
   const router = useRouter();
   const dispatch = useDispatch();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  const [login, { isLoading }] = useLoginMutation();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -41,16 +21,34 @@ const LoginScreen = () => {
       return;
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
     try {
-      console.log('Attempting login...');
-      const userData = await login({ email, password }).unwrap();
+      setIsLoading(true);
+      console.log('Attempting login with email:', email.trim());
       
-      console.log('Login successful, userData:', userData);
+      const { user, firebaseUser } = await userService.login({ 
+        email: email.trim().toLowerCase(), 
+        password 
+      });
       
-      dispatch(setCredentials(userData));
+      console.log('Login successful, user:', user);
+      
+      // Set credentials in Redux store
+      dispatch(setCredentials({
+        user: user,
+        token: await firebaseUser.getIdToken(),
+        isAdmin: user.isAdmin
+      }));
+      
       console.log('Credentials set, navigating...');
       
-      if (userData.isAdmin) {
+      if (user.isAdmin) {
         router.replace('/(admin)');
       } else {
         router.replace('/(app)');
@@ -60,12 +58,13 @@ const LoginScreen = () => {
       console.error('Login error:', error);
       
       let errorMessage = 'Login failed. Please try again.';
-      // Use the new, more specific type guard
-      if (isApiErrorWithData(error)) {
-        errorMessage = error.data.message;
+      if (error.message) {
+        errorMessage = error.message;
       }
       
       Alert.alert('Login Failed', errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 

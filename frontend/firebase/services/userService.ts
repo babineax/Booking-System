@@ -1,22 +1,22 @@
 import {
-    createUserWithEmailAndPassword,
-    User as FirebaseUser,
-    signInWithEmailAndPassword,
-    signOut,
-    updateProfile
+  createUserWithEmailAndPassword,
+  User as FirebaseUser,
+  signInWithEmailAndPassword,
+  signOut,
+  updateProfile
 } from 'firebase/auth';
 import {
-    collection,
-    deleteDoc,
-    doc,
-    getDoc,
-    getDocs,
-    orderBy,
-    query,
-    serverTimestamp,
-    setDoc,
-    updateDoc,
-    where
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  where
 } from 'firebase/firestore';
 import { auth, db } from '../config';
 
@@ -48,6 +48,9 @@ export interface RegisterData extends LoginCredentials {
   lastName: string;
   phone?: string;
   role?: 'customer' | 'staff' | 'admin';
+  specialties?: string[];
+  bio?: string;
+  preferences?: Record<string, any>;
 }
 
 class UserService {
@@ -70,6 +73,7 @@ class UserService {
       });
 
       
+     
       const userDoc: User = {
         id: firebaseUser.uid,
         username: userData.username,
@@ -80,14 +84,26 @@ class UserService {
         role: userData.role || 'customer',
         isAdmin: userData.role === 'admin',
         isActive: true,
-        specialties: userData.role === 'staff' ? [] : undefined,
-        bio: userData.role === 'staff' ? '' : undefined,
-        preferences: userData.role === 'customer' ? {} : undefined,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
 
-      await setDoc(doc(db, this.usersCollection, firebaseUser.uid), userDoc);
+     
+      if (userData.role === 'staff') {
+        userDoc.specialties = userData.specialties || [];
+        userDoc.bio = userData.bio || '';
+      }
+      
+      if (userData.role === 'customer') {
+        userDoc.preferences = userData.preferences || {};
+      }
+
+     
+      const cleanUserDoc = Object.fromEntries(
+        Object.entries(userDoc).filter(([_, value]) => value !== undefined)
+      );
+
+      await setDoc(doc(db, this.usersCollection, firebaseUser.uid), cleanUserDoc);
 
       return { user: userDoc, firebaseUser };
     } catch (error: any) {

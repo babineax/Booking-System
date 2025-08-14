@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users collection - users can read/write their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Allow admins to read all user data
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Services collection - read for all authenticated users, write for staff/admin
+    match /services/{serviceId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'staff'];
+    }
+    
+    // Business hours collection - read for all authenticated users, write for owner/admin
+    match /businessHours/{businessHoursId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        (resource.data.staffId == request.auth.uid ||
+         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
+    }
+    
+    // Bookings collection - users can read/write their own bookings
+    match /bookings/{bookingId} {
+      allow read, write: if request.auth != null && 
+        (resource.data.customerId == request.auth.uid ||
+         resource.data.staffId == request.auth.uid ||
+         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
+    }
+    
+    // Temporary rule for development/seeding - REMOVE IN PRODUCTION
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

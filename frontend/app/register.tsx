@@ -2,7 +2,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useDispatch } from "react-redux";
-import { useRegisterMutation } from "../src/redux/apis/usersApiSlice";
+import { userService } from "../firebase/services/userService";
 import { setCredentials } from "../src/redux/features/auth/authSlice";
 
 type RegisterForm = {
@@ -12,13 +12,14 @@ type RegisterForm = {
   firstName: string;
   lastName: string;
   phone: string;
-  role: string;
+  role: 'customer' | 'staff' | 'admin';
 };
 type FormField = keyof RegisterForm;
 
 const RegisterScreen = () => {
   const router = useRouter();
   const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(false);
   
   const [form, setForm] = useState<RegisterForm>({
     username: "",
@@ -39,8 +40,6 @@ const RegisterScreen = () => {
     "phone",
   ];
 
-  const [register, { isLoading }] = useRegisterMutation();
-
   const handleSubmit = async () => {
     // Basic validation
     if (!form.username || !form.email || !form.password || !form.firstName || !form.lastName) {
@@ -49,17 +48,32 @@ const RegisterScreen = () => {
     }
 
     try {
-      const userData = await register(form).unwrap();
-      dispatch(setCredentials(userData));
+      setIsLoading(true);
+      const { user, firebaseUser } = await userService.register(form);
+      
+      // Set credentials in Redux store
+      dispatch(setCredentials({
+        user: user,
+        token: await firebaseUser.getIdToken(),
+        isAdmin: user.isAdmin
+      }));
       
       Alert.alert("Success", "Registration successful!", [
         {
           text: "OK",
-          onPress: () => router.replace("/dashboard"),
+          onPress: () => {
+            if (user.isAdmin) {
+              router.replace("/(admin)");
+            } else {
+              router.replace("/(app)");
+            }
+          },
         }
       ]);
     } catch (error: any) {
-      Alert.alert("Registration Failed", error?.data?.message || "Registration failed. Please try again.");
+      Alert.alert("Registration Failed", error?.message || "Registration failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 

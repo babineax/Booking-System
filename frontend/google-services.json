@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "686521978499",
+    "project_id": "booking-system-5803c",
+    "storage_bucket": "booking-system-5803c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:686521978499:android:2673c3e249159c7af255b6",
+        "android_client_info": {
+          "package_name": "com.ivy.booking_system"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDYY03aU9zQQ3pnstpHcULSjYzIv7JuE-M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

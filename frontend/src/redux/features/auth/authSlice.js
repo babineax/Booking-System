@@ -1,9 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createSlice } from "@reduxjs/toolkit";
 
-
 const initialState = {
   userInfo: null,
+  firebaseUser: null,
+  isAuthenticated: false,
+  isLoading: true,
 };
 
 const authSlice = createSlice({
@@ -11,18 +13,22 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setCredentials: (state, action) => {
-      state.userInfo = action.payload;
+      state.userInfo = action.payload.user;
+      state.firebaseUser = action.payload.firebaseUser;
+      state.isAuthenticated = true;
+      state.isLoading = false;
 
       const storeData = async () => {
         try {
           await AsyncStorage.setItem(
             "userInfo",
-            JSON.stringify(action.payload)
+            JSON.stringify(action.payload.user)
           );
           
           
-          if (action.payload.token) {
-            await AsyncStorage.setItem("token", action.payload.token);
+          if (action.payload.firebaseUser) {
+            const idToken = await action.payload.firebaseUser.getIdToken();
+            await AsyncStorage.setItem("firebaseToken", idToken);
           }
           
           const expirationTime = (
@@ -38,8 +44,25 @@ const authSlice = createSlice({
       storeData();
     },
 
+    setFirebaseUser: (state, action) => {
+      state.firebaseUser = action.payload;
+      state.isAuthenticated = !!action.payload;
+      state.isLoading = false;
+    },
+
+    setUserInfo: (state, action) => {
+      state.userInfo = action.payload;
+    },
+
+    setLoading: (state, action) => {
+      state.isLoading = action.payload;
+    },
+
     logout: (state) => {
       state.userInfo = null;
+      state.firebaseUser = null;
+      state.isAuthenticated = false;
+      state.isLoading = false;
 
       const clearData = async () => {
         try {
@@ -54,5 +77,12 @@ const authSlice = createSlice({
   },
 });
 
-export const { setCredentials, logout } = authSlice.actions;
+export const { 
+  setCredentials, 
+  setFirebaseUser, 
+  setUserInfo, 
+  setLoading, 
+  logout 
+} = authSlice.actions;
+
 export default authSlice.reducer;

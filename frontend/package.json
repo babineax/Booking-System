@@ -8,7 +8,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "seed:web": "open scripts/seed.html",
+    "seed:browser": "echo 'Opening seeding page in browser...' && open scripts/seed.html"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",

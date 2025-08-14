@@ -1,9 +1,7 @@
 
-import {
-    businessHoursService,
-    serviceService,
-    userService
-} from '../firebase/services';
+import { businessHoursService } from './services/businessHoursService';
+import { serviceService } from './services/serviceService';
+import { userService } from './services/userService';
 
 const seedData = {
   users: [
@@ -188,6 +186,6 @@ export async function seedDatabase() {
 
 
 export {
-    seedBusinessHours, seedServices, seedUsers
+  seedBusinessHours, seedServices, seedUsers
 };
 

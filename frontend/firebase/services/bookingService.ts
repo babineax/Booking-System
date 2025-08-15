@@ -131,22 +131,50 @@ class BookingService {
 
   async getAllBookings(): Promise<Booking[]> {
     try {
-      const bookingsQuery = query(
-        collection(db, this.bookingsCollection),
-        orderBy("appointmentDate", "desc")
-      );
+      try {
+        const bookingsQuery = query(
+          collection(db, this.bookingsCollection),
+          orderBy("appointmentDate", "desc")
+        );
 
-      const querySnapshot = await getDocs(bookingsQuery);
+        const querySnapshot = await getDocs(bookingsQuery);
 
-      return querySnapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          appointmentDate:
-            data.appointmentDate?.toDate() || data.appointmentDate,
-        };
-      }) as Booking[];
+        return querySnapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            appointmentDate:
+              data.appointmentDate?.toDate() || data.appointmentDate,
+          };
+        }) as Booking[];
+      } catch (indexError: any) {
+       
+        if (indexError.message?.includes("index")) {
+          console.warn("Index not ready, fetching without ordering");
+          const bookingsQuery = query(
+            collection(db, this.bookingsCollection)
+          );
+          const querySnapshot = await getDocs(bookingsQuery);
+          const bookings = querySnapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              appointmentDate:
+                data.appointmentDate?.toDate() || data.appointmentDate,
+            };
+          }) as Booking[];
+          
+          
+          return bookings.sort((a, b) => {
+            const dateA = a.appointmentDate instanceof Timestamp ? a.appointmentDate.toDate() : new Date(a.appointmentDate);
+            const dateB = b.appointmentDate instanceof Timestamp ? b.appointmentDate.toDate() : new Date(b.appointmentDate);
+            return dateB.getTime() - dateA.getTime();
+          });
+        }
+        throw indexError;
+      }
     } catch (error: any) {
       throw new Error(error.message || "Failed to get bookings");
     }
@@ -208,24 +236,58 @@ class BookingService {
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
 
-      const bookingsQuery = query(
-        collection(db, this.bookingsCollection),
-        where("appointmentDate", ">=", Timestamp.fromDate(startOfDay)),
-        where("appointmentDate", "<=", Timestamp.fromDate(endOfDay)),
-        orderBy("appointmentDate")
-      );
+      try {
+        const bookingsQuery = query(
+          collection(db, this.bookingsCollection),
+          where("appointmentDate", ">=", Timestamp.fromDate(startOfDay)),
+          where("appointmentDate", "<=", Timestamp.fromDate(endOfDay)),
+          orderBy("appointmentDate")
+        );
 
-      const querySnapshot = await getDocs(bookingsQuery);
+        const querySnapshot = await getDocs(bookingsQuery);
 
-      return querySnapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          appointmentDate:
-            data.appointmentDate?.toDate() || data.appointmentDate,
-        };
-      }) as Booking[];
+        return querySnapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            appointmentDate:
+              data.appointmentDate?.toDate() || data.appointmentDate,
+          };
+        }) as Booking[];
+      } catch (indexError: any) {
+        
+        if (indexError.message?.includes("index")) {
+          console.warn("Index not ready, filtering bookings client-side");
+          const bookingsQuery = query(collection(db, this.bookingsCollection));
+          const querySnapshot = await getDocs(bookingsQuery);
+          
+          const bookings = querySnapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              appointmentDate:
+                data.appointmentDate instanceof Timestamp
+                  ? data.appointmentDate.toDate()
+                  : new Date(data.appointmentDate),
+            };
+          }) as Booking[];
+
+          
+          return bookings
+            .filter((booking) => {
+              const bookingDate = booking.appointmentDate;
+              return bookingDate >= startOfDay && bookingDate <= endOfDay;
+            })
+            .sort((a, b) => {
+              const dateA = a.appointmentDate instanceof Date ? a.appointmentDate : (a.appointmentDate as Timestamp).toDate();
+              const dateB = b.appointmentDate instanceof Date ? b.appointmentDate : (b.appointmentDate as Timestamp).toDate();
+              return dateA.getTime() - dateB.getTime();
+            });
+        }
+        throw indexError;
+      }
     } catch (error: any) {
       throw new Error(error.message || "Failed to get bookings by date");
     }

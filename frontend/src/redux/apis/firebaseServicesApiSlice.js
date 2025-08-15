@@ -1,5 +1,5 @@
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
-import { serviceService } from "../../../firebase/services";
+import { serviceService } from "../../../firebase";
 
 export const firebaseServicesApiSlice = createApi({
   reducerPath: "firebaseServicesApi",
@@ -12,7 +12,7 @@ export const firebaseServicesApiSlice = createApi({
           const result = await serviceService.getAllServices();
           return { data: result };
         } catch (error) {
-          return { error: { status: 'FETCH_ERROR', error: error.message } };
+          return { error: { status: "FETCH_ERROR", error: error.message } };
         }
       },
       providesTags: (result) =>
@@ -30,7 +30,7 @@ export const firebaseServicesApiSlice = createApi({
           const result = await serviceService.getActiveServices();
           return { data: result };
         } catch (error) {
-          return { error: { status: 'FETCH_ERROR', error: error.message } };
+          return { error: { status: "FETCH_ERROR", error: error.message } };
         }
       },
       providesTags: (result) =>
@@ -48,7 +48,7 @@ export const firebaseServicesApiSlice = createApi({
           const result = await serviceService.getServiceById(id);
           return { data: result };
         } catch (error) {
-          return { error: { status: 'FETCH_ERROR', error: error.message } };
+          return { error: { status: "FETCH_ERROR", error: error.message } };
         }
       },
       providesTags: (result, error, id) => [{ type: "Service", id }],
@@ -60,22 +60,28 @@ export const firebaseServicesApiSlice = createApi({
           const result = await serviceService.getServicesByCategory(category);
           return { data: result };
         } catch (error) {
-          return { error: { status: 'FETCH_ERROR', error: error.message } };
+          return { error: { status: "FETCH_ERROR", error: error.message } };
         }
       },
-      providesTags: (result, error, category) => [{ type: "Service", id: `CATEGORY_${category}` }],
+      providesTags: (result, error, category) => [
+        { type: "Service", id: `CATEGORY_${category}` },
+      ],
     }),
 
     getServicesByStaff: builder.query({
       queryFn: async (staffMemberId) => {
         try {
-          const result = await serviceService.getServicesByStaffMember(staffMemberId);
+          const result = await serviceService.getServicesByStaffMember(
+            staffMemberId
+          );
           return { data: result };
         } catch (error) {
-          return { error: { status: 'FETCH_ERROR', error: error.message } };
+          return { error: { status: "FETCH_ERROR", error: error.message } };
         }
       },
-      providesTags: (result, error, staffMemberId) => [{ type: "Service", id: `STAFF_${staffMemberId}` }],
+      providesTags: (result, error, staffMemberId) => [
+        { type: "Service", id: `STAFF_${staffMemberId}` },
+      ],
     }),
 
     createService: builder.mutation({
@@ -84,7 +90,7 @@ export const firebaseServicesApiSlice = createApi({
           const result = await serviceService.createService(serviceData);
           return { data: result };
         } catch (error) {
-          return { error: { status: 'FETCH_ERROR', error: error.message } };
+          return { error: { status: "FETCH_ERROR", error: error.message } };
         }
       },
       invalidatesTags: ["Service"],
@@ -96,7 +102,7 @@ export const firebaseServicesApiSlice = createApi({
           const result = await serviceService.updateService(id, serviceData);
           return { data: result };
         } catch (error) {
-          return { error: { status: 'FETCH_ERROR', error: error.message } };
+          return { error: { status: "FETCH_ERROR", error: error.message } };
         }
       },
       invalidatesTags: (result, error, { id }) => [{ type: "Service", id }],
@@ -108,7 +114,7 @@ export const firebaseServicesApiSlice = createApi({
           await serviceService.deleteService(id);
           return { data: undefined };
         } catch (error) {
-          return { error: { status: 'FETCH_ERROR', error: error.message } };
+          return { error: { status: "FETCH_ERROR", error: error.message } };
         }
       },
       invalidatesTags: (result, error, id) => [{ type: "Service", id }],
@@ -117,25 +123,35 @@ export const firebaseServicesApiSlice = createApi({
     addStaffToService: builder.mutation({
       queryFn: async ({ serviceId, staffMemberId }) => {
         try {
-          const result = await serviceService.addStaffToService(serviceId, staffMemberId);
+          const result = await serviceService.addStaffToService(
+            serviceId,
+            staffMemberId
+          );
           return { data: result };
         } catch (error) {
-          return { error: { status: 'FETCH_ERROR', error: error.message } };
+          return { error: { status: "FETCH_ERROR", error: error.message } };
         }
       },
-      invalidatesTags: (result, error, { serviceId }) => [{ type: "Service", id: serviceId }],
+      invalidatesTags: (result, error, { serviceId }) => [
+        { type: "Service", id: serviceId },
+      ],
     }),
 
     removeStaffFromService: builder.mutation({
       queryFn: async ({ serviceId, staffMemberId }) => {
         try {
-          const result = await serviceService.removeStaffFromService(serviceId, staffMemberId);
+          const result = await serviceService.removeStaffFromService(
+            serviceId,
+            staffMemberId
+          );
           return { data: result };
         } catch (error) {
-          return { error: { status: 'FETCH_ERROR', error: error.message } };
+          return { error: { status: "FETCH_ERROR", error: error.message } };
         }
       },
-      invalidatesTags: (result, error, { serviceId }) => [{ type: "Service", id: serviceId }],
+      invalidatesTags: (result, error, { serviceId }) => [
+        { type: "Service", id: serviceId },
+      ],
     }),
   }),
 });

@@ -1,25 +1,32 @@
 import {
-    addDoc,
-    collection,
-    deleteDoc,
-    doc,
-    getDoc,
-    getDocs,
-    orderBy,
-    query,
-    serverTimestamp,
-    updateDoc,
-    where
-} from 'firebase/firestore';
-import { db } from '../config';
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+import { db } from "../config/firebase_config";
 
 export interface BusinessHours {
   id?: string;
-  dayOfWeek: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+  dayOfWeek:
+    | "monday"
+    | "tuesday"
+    | "wednesday"
+    | "thursday"
+    | "friday"
+    | "saturday"
+    | "sunday";
   isOpen: boolean;
-  openTime?: string; 
+  openTime?: string;
   closeTime?: string;
-  breakStart?: string; 
+  breakStart?: string;
   breakEnd?: string;
   staffMemberId: string;
   createdAt?: any;
@@ -27,7 +34,14 @@ export interface BusinessHours {
 }
 
 export interface CreateBusinessHoursData {
-  dayOfWeek: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+  dayOfWeek:
+    | "monday"
+    | "tuesday"
+    | "wednesday"
+    | "thursday"
+    | "friday"
+    | "saturday"
+    | "sunday";
   isOpen: boolean;
   openTime?: string;
   closeTime?: string;
@@ -37,21 +51,24 @@ export interface CreateBusinessHoursData {
 }
 
 class BusinessHoursService {
-  private businessHoursCollection = 'businessHours';
+  private businessHoursCollection = "businessHours";
 
-  async createBusinessHours(businessHoursData: CreateBusinessHoursData): Promise<BusinessHours> {
+  async createBusinessHours(
+    businessHoursData: CreateBusinessHoursData
+  ): Promise<BusinessHours> {
     try {
-      
       const existing = await this.getBusinessHoursByStaffAndDay(
-        businessHoursData.staffMemberId, 
+        businessHoursData.staffMemberId,
         businessHoursData.dayOfWeek
       );
 
       if (existing) {
-        throw new Error('Business hours already exist for this staff member and day');
+        throw new Error(
+          "Business hours already exist for this staff member and day"
+        );
       }
 
-      const businessHoursDoc: Omit<BusinessHours, 'id'> = {
+      const businessHoursDoc: Omit<BusinessHours, "id"> = {
         dayOfWeek: businessHoursData.dayOfWeek,
         isOpen: businessHoursData.isOpen,
         openTime: businessHoursData.openTime,
@@ -60,76 +77,90 @@ class BusinessHoursService {
         breakEnd: businessHoursData.breakEnd,
         staffMemberId: businessHoursData.staffMemberId,
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       };
 
-      const docRef = await addDoc(collection(db, this.businessHoursCollection), businessHoursDoc);
-      
+      const docRef = await addDoc(
+        collection(db, this.businessHoursCollection),
+        businessHoursDoc
+      );
+
       const createdBusinessHours = await this.getBusinessHoursById(docRef.id);
       if (!createdBusinessHours) {
-        throw new Error('Failed to retrieve created business hours');
+        throw new Error("Failed to retrieve created business hours");
       }
 
       return createdBusinessHours;
     } catch (error: any) {
-      throw new Error(error.message || 'Failed to create business hours');
+      throw new Error(error.message || "Failed to create business hours");
     }
   }
 
   async getBusinessHoursById(id: string): Promise<BusinessHours | null> {
     try {
-      const businessHoursDoc = await getDoc(doc(db, this.businessHoursCollection, id));
-      
+      const businessHoursDoc = await getDoc(
+        doc(db, this.businessHoursCollection, id)
+      );
+
       if (businessHoursDoc.exists()) {
-        return { id: businessHoursDoc.id, ...businessHoursDoc.data() } as BusinessHours;
+        return {
+          id: businessHoursDoc.id,
+          ...businessHoursDoc.data(),
+        } as BusinessHours;
       }
-      
+
       return null;
     } catch (error: any) {
-      throw new Error(error.message || 'Failed to get business hours');
+      throw new Error(error.message || "Failed to get business hours");
     }
   }
 
-  async getBusinessHoursByStaffMember(staffMemberId: string): Promise<BusinessHours[]> {
+  async getBusinessHoursByStaffMember(
+    staffMemberId: string
+  ): Promise<BusinessHours[]> {
     try {
       const businessHoursQuery = query(
         collection(db, this.businessHoursCollection),
-        where('staffMemberId', '==', staffMemberId),
-        orderBy('dayOfWeek')
+        where("staffMemberId", "==", staffMemberId),
+        orderBy("dayOfWeek")
       );
-      
+
       const querySnapshot = await getDocs(businessHoursQuery);
-      
-      return querySnapshot.docs.map(doc => ({
+
+      return querySnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       })) as BusinessHours[];
     } catch (error: any) {
-      throw new Error(error.message || 'Failed to get business hours by staff member');
+      throw new Error(
+        error.message || "Failed to get business hours by staff member"
+      );
     }
   }
 
   async getBusinessHoursByStaffAndDay(
-    staffMemberId: string, 
+    staffMemberId: string,
     dayOfWeek: string
   ): Promise<BusinessHours | null> {
     try {
       const businessHoursQuery = query(
         collection(db, this.businessHoursCollection),
-        where('staffMemberId', '==', staffMemberId),
-        where('dayOfWeek', '==', dayOfWeek)
+        where("staffMemberId", "==", staffMemberId),
+        where("dayOfWeek", "==", dayOfWeek)
       );
-      
+
       const querySnapshot = await getDocs(businessHoursQuery);
-      
+
       if (!querySnapshot.empty) {
         const doc = querySnapshot.docs[0];
         return { id: doc.id, ...doc.data() } as BusinessHours;
       }
-      
+
       return null;
     } catch (error: any) {
-      throw new Error(error.message || 'Failed to get business hours by staff and day');
+      throw new Error(
+        error.message || "Failed to get business hours by staff and day"
+      );
     }
   }
 
@@ -137,37 +168,40 @@ class BusinessHoursService {
     try {
       const businessHoursQuery = query(
         collection(db, this.businessHoursCollection),
-        orderBy('staffMemberId'),
-        orderBy('dayOfWeek')
+        orderBy("staffMemberId"),
+        orderBy("dayOfWeek")
       );
-      
+
       const querySnapshot = await getDocs(businessHoursQuery);
-      
-      return querySnapshot.docs.map(doc => ({
+
+      return querySnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       })) as BusinessHours[];
     } catch (error: any) {
-      throw new Error(error.message || 'Failed to get all business hours');
+      throw new Error(error.message || "Failed to get all business hours");
     }
   }
 
-  async updateBusinessHours(id: string, updates: Partial<BusinessHours>): Promise<BusinessHours> {
+  async updateBusinessHours(
+    id: string,
+    updates: Partial<BusinessHours>
+  ): Promise<BusinessHours> {
     try {
       const businessHoursRef = doc(db, this.businessHoursCollection, id);
       await updateDoc(businessHoursRef, {
         ...updates,
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       });
-      
+
       const updatedBusinessHours = await this.getBusinessHoursById(id);
       if (!updatedBusinessHours) {
-        throw new Error('Failed to retrieve updated business hours');
+        throw new Error("Failed to retrieve updated business hours");
       }
-      
+
       return updatedBusinessHours;
     } catch (error: any) {
-      throw new Error(error.message || 'Failed to update business hours');
+      throw new Error(error.message || "Failed to update business hours");
     }
   }
 
@@ -175,94 +209,111 @@ class BusinessHoursService {
     try {
       await deleteDoc(doc(db, this.businessHoursCollection, id));
     } catch (error: any) {
-      throw new Error(error.message || 'Failed to delete business hours');
+      throw new Error(error.message || "Failed to delete business hours");
     }
   }
 
   async setWeeklyBusinessHours(
-    staffMemberId: string, 
-    weeklyHours: Omit<CreateBusinessHoursData, 'staffMemberId'>[]
+    staffMemberId: string,
+    weeklyHours: Omit<CreateBusinessHoursData, "staffMemberId">[]
   ): Promise<BusinessHours[]> {
     try {
       const results: BusinessHours[] = [];
-      
+
       for (const dayHours of weeklyHours) {
         const existing = await this.getBusinessHoursByStaffAndDay(
-          staffMemberId, 
+          staffMemberId,
           dayHours.dayOfWeek
         );
-        
+
         if (existing) {
-          
-          const updated = await this.updateBusinessHours(existing.id!, dayHours);
+          const updated = await this.updateBusinessHours(
+            existing.id!,
+            dayHours
+          );
           results.push(updated);
         } else {
-          
           const created = await this.createBusinessHours({
             ...dayHours,
-            staffMemberId
+            staffMemberId,
           });
           results.push(created);
         }
       }
-      
+
       return results;
     } catch (error: any) {
-      throw new Error(error.message || 'Failed to set weekly business hours');
+      throw new Error(error.message || "Failed to set weekly business hours");
     }
   }
 
   async getWorkingDays(staffMemberId: string): Promise<string[]> {
     try {
-      const businessHours = await this.getBusinessHoursByStaffMember(staffMemberId);
-      
+      const businessHours = await this.getBusinessHoursByStaffMember(
+        staffMemberId
+      );
+
       return businessHours
-        .filter(hours => hours.isOpen)
-        .map(hours => hours.dayOfWeek);
+        .filter((hours) => hours.isOpen)
+        .map((hours) => hours.dayOfWeek);
     } catch (error: any) {
-      throw new Error(error.message || 'Failed to get working days');
+      throw new Error(error.message || "Failed to get working days");
     }
   }
 
   async isStaffAvailable(
-    staffMemberId: string, 
-    dayOfWeek: string, 
+    staffMemberId: string,
+    dayOfWeek: string,
     time: string
   ): Promise<boolean> {
     try {
-      const businessHours = await this.getBusinessHoursByStaffAndDay(staffMemberId, dayOfWeek);
-      
+      const businessHours = await this.getBusinessHoursByStaffAndDay(
+        staffMemberId,
+        dayOfWeek
+      );
+
       if (!businessHours || !businessHours.isOpen) {
         return false;
       }
 
       // Check if time is within working hours
-      const isWithinWorkingHours = businessHours.openTime && businessHours.closeTime &&
-        time >= businessHours.openTime && time <= businessHours.closeTime;
+      const isWithinWorkingHours =
+        businessHours.openTime &&
+        businessHours.closeTime &&
+        time >= businessHours.openTime &&
+        time <= businessHours.closeTime;
 
       if (!isWithinWorkingHours) {
         return false;
       }
 
-      
-      const isDuringBreak = businessHours.breakStart && businessHours.breakEnd &&
-        time >= businessHours.breakStart && time <= businessHours.breakEnd;
+      const isDuringBreak =
+        businessHours.breakStart &&
+        businessHours.breakEnd &&
+        time >= businessHours.breakStart &&
+        time <= businessHours.breakEnd;
 
       return !isDuringBreak;
     } catch (error: any) {
-      throw new Error(error.message || 'Failed to check staff availability');
+      throw new Error(error.message || "Failed to check staff availability");
     }
   }
 
-  async getAvailableHours(staffMemberId: string, dayOfWeek: string): Promise<{
+  async getAvailableHours(
+    staffMemberId: string,
+    dayOfWeek: string
+  ): Promise<{
     openTime?: string;
     closeTime?: string;
     breakStart?: string;
     breakEnd?: string;
   } | null> {
     try {
-      const businessHours = await this.getBusinessHoursByStaffAndDay(staffMemberId, dayOfWeek);
-      
+      const businessHours = await this.getBusinessHoursByStaffAndDay(
+        staffMemberId,
+        dayOfWeek
+      );
+
       if (!businessHours || !businessHours.isOpen) {
         return null;
       }
@@ -271,15 +322,23 @@ class BusinessHoursService {
         openTime: businessHours.openTime,
         closeTime: businessHours.closeTime,
         breakStart: businessHours.breakStart,
-        breakEnd: businessHours.breakEnd
+        breakEnd: businessHours.breakEnd,
       };
     } catch (error: any) {
-      throw new Error(error.message || 'Failed to get available hours');
+      throw new Error(error.message || "Failed to get available hours");
     }
   }
 
   getDayOfWeek(date: Date): string {
-    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const days = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ];
     return days[date.getDay()];
   }
 
@@ -292,12 +351,17 @@ class BusinessHoursService {
     return openTime < closeTime;
   }
 
-  isBreakTimeValid(openTime: string, closeTime: string, breakStart?: string, breakEnd?: string): boolean {
+  isBreakTimeValid(
+    openTime: string,
+    closeTime: string,
+    breakStart?: string,
+    breakEnd?: string
+  ): boolean {
     if (!breakStart || !breakEnd) return true;
-    
-    return breakStart >= openTime && 
-           breakEnd <= closeTime && 
-           breakStart < breakEnd;
+
+    return (
+      breakStart >= openTime && breakEnd <= closeTime && breakStart < breakEnd
+    );
   }
 }
 

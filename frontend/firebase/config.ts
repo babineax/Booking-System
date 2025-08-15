@@ -12,6 +12,13 @@ const firebaseConfig = {
 };
 
 
+console.log('Firebase Config:', {
+  hasApiKey: !!firebaseConfig.apiKey,
+  hasProjectId: !!firebaseConfig.projectId,
+  projectId: firebaseConfig.projectId
+});
+
+
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 

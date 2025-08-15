@@ -115,18 +115,36 @@ class ServiceService {
 
   async getActiveServices(): Promise<Service[]> {
     try {
-      const servicesQuery = query(
-        collection(db, this.servicesCollection),
-        where("isActive", "==", true),
-        orderBy("name")
-      );
-
-      const querySnapshot = await getDocs(servicesQuery);
-
-      return querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Service[];
+      
+      try {
+        const servicesQuery = query(
+          collection(db, this.servicesCollection),
+          where("isActive", "==", true),
+          orderBy("name")
+        );
+        const querySnapshot = await getDocs(servicesQuery);
+        return querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Service[];
+      } catch (indexError: any) {
+       
+        if (indexError.message?.includes("index")) {
+          console.warn("Composite index not ready, falling back to simple query");
+          const servicesQuery = query(
+            collection(db, this.servicesCollection),
+            where("isActive", "==", true)
+          );
+          const querySnapshot = await getDocs(servicesQuery);
+          const services = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })) as Service[];
+          
+          return services.sort((a, b) => a.name.localeCompare(b.name));
+        }
+        throw indexError;
+      }
     } catch (error: any) {
       throw new Error(error.message || "Failed to get active services");
     }

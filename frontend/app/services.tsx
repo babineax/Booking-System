@@ -27,9 +27,13 @@ export default function ServiceListScreen() {
   }
 
   if (error) {
+    console.error('Service loading error:', error);
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>Error loading services</Text>
+        <Text style={[styles.errorText, { fontSize: 14, marginTop: 8 }]}>
+          {(error as any)?.error || 'Unknown error occurred'}
+        </Text>
       </View>
     );
   }

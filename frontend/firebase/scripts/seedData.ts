@@ -155,29 +155,48 @@ export async function seedUsers(): Promise<UserRecord[]> {
 
   for (const user of usersData) {
     try {
-      const userRecord = await auth.createUser({
-        email: user.email,
-        password: user.password,
-        displayName: `${user.firstName} ${user.lastName}`,
-      });
+      let userRecord: UserRecord;
 
+      try {
+        // Check if user exists
+        userRecord = await auth.getUserByEmail(user.email);
+        console.log(`User already exists: ${user.email}`);
+      } catch {
+        // Create new user
+        userRecord = await auth.createUser({
+          email: user.email,
+          password: user.password,
+          displayName: `${user.firstName} ${user.lastName}`,
+        });
+        console.log(`Created user: ${user.email}`);
+      }
+
+      // Set custom role claim
+      await auth.setCustomUserClaims(userRecord.uid, { role: user.role });
+
+      // Firestore user document (idempotent with merge)
       await db
         .collection("users")
         .doc(userRecord.uid)
-        .set({
-          username: user.username,
-          role: user.role,
-          phone: user.phone,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          specialties: user.specialties || [],
-          bio: user.bio || "",
-        });
+        .set(
+          {
+            username: user.username,
+            role: user.role,
+            phone: user.phone,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            specialties: user.specialties || [],
+            bio: user.bio || "",
+          },
+          { merge: true }
+        );
 
       createdUsers.push(userRecord);
-      console.log(`Created user: ${user.email}`);
     } catch (err: any) {
-      console.error(`Failed to create user ${user.email}:`, err.message || err);
+      console.error(
+        `Failed to process user ${user.email}:`,
+        err.message || err
+      );
     }
   }
 
@@ -186,16 +205,26 @@ export async function seedUsers(): Promise<UserRecord[]> {
 
 export async function seedServices(users: UserRecord[]): Promise<void> {
   console.log("Seeding services...");
-  const staffUsers = users.filter(
-    (u) => u.customClaims?.role === "staff" || u.displayName?.includes("Sarah")
-  ); // demo
+
+  const staffUsers = users.filter((u) => u.customClaims?.role === "staff");
 
   for (const service of servicesData) {
     try {
+      // Check if service already exists
+      const query = await db
+        .collection("services")
+        .where("name", "==", service.name)
+        .get();
+      if (!query.empty) {
+        console.log(`Service already exists: ${service.name}`);
+        continue;
+      }
+
       await db.collection("services").add({
         ...service,
         staffMembers: staffUsers.map((u) => u.uid),
       });
+
       console.log(`Created service: ${service.name}`);
     } catch (err: any) {
       console.error(
@@ -208,13 +237,16 @@ export async function seedServices(users: UserRecord[]): Promise<void> {
 
 export async function seedBusinessHours(users: UserRecord[]): Promise<void> {
   console.log("Seeding business hours...");
-  const staffUsers = users.filter((u) => u.displayName?.includes("Sarah")); // only staff
+
+  const staffUsers = users.filter((u) => u.customClaims?.role === "staff");
 
   for (const staff of staffUsers) {
     try {
-      await db.collection("businessHours").doc(staff.uid).set({
-        weeklyHours: defaultWeeklyHours,
-      });
+      // Idempotent merge
+      await db
+        .collection("businessHours")
+        .doc(staff.uid)
+        .set({ weeklyHours: defaultWeeklyHours }, { merge: true });
       console.log(`Created business hours for: ${staff.displayName}`);
     } catch (err: any) {
       console.error(
@@ -225,9 +257,13 @@ export async function seedBusinessHours(users: UserRecord[]): Promise<void> {
   }
 }
 
-export async function seedDatabase(): Promise<void> {
+export async function seedDatabase(): Promise<{
+  users: UserRecord[];
+  success: boolean;
+}> {
   const users = await seedUsers();
   await seedServices(users);
   await seedBusinessHours(users);
   console.log("Database seeding completed!");
+  return { users, success: true };
 }

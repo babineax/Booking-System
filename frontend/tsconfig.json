@@ -9,16 +9,12 @@
     "resolveJsonModule": true,
     "noEmit": true,
     "isolatedModules": true,
-    "types": [
-      "react",
-      "react-native",
-      "expo",
-      "nativewind/types"
-    ],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowImportingTsExtensions": true,
+    "types": ["react", "react-native", "expo", "nativewind/types"],
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     }
   },
   "include": [
@@ -29,8 +25,6 @@
     "nativewind-env.d.ts",
     "types/**/*.d.ts"
   ],
-  "exclude": [
-    "node_modules"
-  ],
+  "exclude": ["node_modules"],
   "extends": "expo/tsconfig.base"
 }

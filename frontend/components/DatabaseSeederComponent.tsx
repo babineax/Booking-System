@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import { seedDatabase, seedUsers } from "../firebase/utils/seedData";
+import { seedDatabase, seedUsers } from "../firebase/scripts/seedData";
 
 interface SeedingResult {
   success: boolean;

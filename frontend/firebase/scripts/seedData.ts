@@ -1,0 +1,233 @@
+import { auth, db } from "../../firebase/config/firebase_admin"; // use Admin SDK
+import type { UserRecord } from "firebase-admin/auth";
+
+// ---------------------- TYPES ----------------------
+interface UserInput {
+  username: string;
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  role: "admin" | "staff" | "customer";
+  specialties?: string[];
+  bio?: string;
+}
+
+export type ServiceCategory =
+  | "haircut"
+  | "coloring"
+  | "styling"
+  | "treatment"
+  | "consultation"
+  | "other";
+
+export interface Service {
+  name: string;
+  description: string;
+  duration: number;
+  price: number;
+  category: ServiceCategory;
+  isActive: boolean;
+}
+
+type DayOfWeek =
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday"
+  | "saturday"
+  | "sunday";
+
+interface BusinessHours {
+  dayOfWeek: DayOfWeek;
+  isOpen: boolean;
+  openTime?: string;
+  closeTime?: string;
+}
+
+// ---------------------- SEED DATA ----------------------
+const usersData: UserInput[] = [
+  {
+    username: "admin",
+    email: "admin@bookingsystem.com",
+    password: "admin123",
+    firstName: "Admin",
+    lastName: "User",
+    phone: "+1234567890",
+    role: "admin",
+  },
+  {
+    username: "stylist1",
+    email: "sarah@bookingsystem.com",
+    password: "stylist123",
+    firstName: "Sarah",
+    lastName: "Johnson",
+    phone: "+1234567891",
+    role: "staff",
+    specialties: ["haircut", "coloring"],
+    bio: "Professional hair stylist with 5+ years of experience.",
+  },
+  {
+    username: "customer1",
+    email: "customer@example.com",
+    password: "customer123",
+    firstName: "John",
+    lastName: "Doe",
+    phone: "+1234567892",
+    role: "customer",
+  },
+];
+
+const servicesData: Omit<Service, "staffMembers">[] = [
+  {
+    name: "Men's Haircut",
+    description: "Professional haircut for men",
+    duration: 30,
+    price: 25,
+    category: "haircut",
+    isActive: true,
+  },
+  {
+    name: "Women's Haircut",
+    description: "Professional haircut for women",
+    duration: 45,
+    price: 35,
+    category: "haircut",
+    isActive: true,
+  },
+  {
+    name: "Hair Coloring",
+    description: "Full hair coloring service",
+    duration: 120,
+    price: 80,
+    category: "coloring",
+    isActive: true,
+  },
+  {
+    name: "Hair Styling",
+    description: "Special occasion hair styling",
+    duration: 60,
+    price: 45,
+    category: "styling",
+    isActive: true,
+  },
+  {
+    name: "Deep Conditioning Treatment",
+    description: "Intensive hair treatment",
+    duration: 30,
+    price: 25,
+    category: "treatment",
+    isActive: true,
+  },
+];
+
+const defaultWeeklyHours: BusinessHours[] = [
+  { dayOfWeek: "monday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+  { dayOfWeek: "tuesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+  {
+    dayOfWeek: "wednesday",
+    isOpen: true,
+    openTime: "09:00",
+    closeTime: "17:00",
+  },
+  {
+    dayOfWeek: "thursday",
+    isOpen: true,
+    openTime: "09:00",
+    closeTime: "17:00",
+  },
+  { dayOfWeek: "friday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+  {
+    dayOfWeek: "saturday",
+    isOpen: true,
+    openTime: "10:00",
+    closeTime: "16:00",
+  },
+  { dayOfWeek: "sunday", isOpen: false },
+];
+
+// ---------------------- SEED FUNCTIONS ----------------------
+export async function seedUsers(): Promise<UserRecord[]> {
+  const createdUsers: UserRecord[] = [];
+  console.log("Seeding users...");
+
+  for (const user of usersData) {
+    try {
+      const userRecord = await auth.createUser({
+        email: user.email,
+        password: user.password,
+        displayName: `${user.firstName} ${user.lastName}`,
+      });
+
+      await db
+        .collection("users")
+        .doc(userRecord.uid)
+        .set({
+          username: user.username,
+          role: user.role,
+          phone: user.phone,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          specialties: user.specialties || [],
+          bio: user.bio || "",
+        });
+
+      createdUsers.push(userRecord);
+      console.log(`Created user: ${user.email}`);
+    } catch (err: any) {
+      console.error(`Failed to create user ${user.email}:`, err.message || err);
+    }
+  }
+
+  return createdUsers;
+}
+
+export async function seedServices(users: UserRecord[]): Promise<void> {
+  console.log("Seeding services...");
+  const staffUsers = users.filter(
+    (u) => u.customClaims?.role === "staff" || u.displayName?.includes("Sarah")
+  ); // demo
+
+  for (const service of servicesData) {
+    try {
+      await db.collection("services").add({
+        ...service,
+        staffMembers: staffUsers.map((u) => u.uid),
+      });
+      console.log(`Created service: ${service.name}`);
+    } catch (err: any) {
+      console.error(
+        `Failed to create service ${service.name}:`,
+        err.message || err
+      );
+    }
+  }
+}
+
+export async function seedBusinessHours(users: UserRecord[]): Promise<void> {
+  console.log("Seeding business hours...");
+  const staffUsers = users.filter((u) => u.displayName?.includes("Sarah")); // only staff
+
+  for (const staff of staffUsers) {
+    try {
+      await db.collection("businessHours").doc(staff.uid).set({
+        weeklyHours: defaultWeeklyHours,
+      });
+      console.log(`Created business hours for: ${staff.displayName}`);
+    } catch (err: any) {
+      console.error(
+        `Failed to create business hours for ${staff.displayName}:`,
+        err.message || err
+      );
+    }
+  }
+}
+
+export async function seedDatabase(): Promise<void> {
+  const users = await seedUsers();
+  await seedServices(users);
+  await seedBusinessHours(users);
+  console.log("Database seeding completed!");
+}

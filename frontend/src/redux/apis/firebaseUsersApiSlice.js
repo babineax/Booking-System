@@ -1,5 +1,5 @@
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
-import { userService } from "../../../firebase/services";
+import { userService } from "../../../firebase";
 
 export const firebaseUsersApiSlice = createApi({
   reducerPath: "firebaseUsersApi",
@@ -12,7 +12,7 @@ export const firebaseUsersApiSlice = createApi({
           const result = await userService.login(credentials);
           return { data: result };
         } catch (error) {
-          return { error: { status: 'FETCH_ERROR', error: error.message } };
+          return { error: { status: "FETCH_ERROR", error: error.message } };
         }
       },
     }),
@@ -23,7 +23,7 @@ export const firebaseUsersApiSlice = createApi({
           await userService.logout();
           return { data: undefined };
         } catch (error) {
-          return { error: { status: 'FETCH_ERROR', error: error.message } };
+          return { error: { status: "FETCH_ERROR", error: error.message } };
         }
       },
     }),
@@ -34,7 +34,7 @@ export const firebaseUsersApiSlice = createApi({
           const result = await userService.register(userData);
           return { data: result };
         } catch (error) {
-          return { error: { status: 'FETCH_ERROR', error: error.message } };
+          return { error: { status: "FETCH_ERROR", error: error.message } };
         }
       },
       invalidatesTags: ["User"],
@@ -46,7 +46,7 @@ export const firebaseUsersApiSlice = createApi({
           const result = await userService.updateProfile(id, data);
           return { data: result };
         } catch (error) {
-          return { error: { status: 'FETCH_ERROR', error: error.message } };
+          return { error: { status: "FETCH_ERROR", error: error.message } };
         }
       },
       invalidatesTags: (result, error, { id }) => [{ type: "User", id }],
@@ -58,7 +58,7 @@ export const firebaseUsersApiSlice = createApi({
           const result = await userService.getAllUsers();
           return { data: result };
         } catch (error) {
-          return { error: { status: 'FETCH_ERROR', error: error.message } };
+          return { error: { status: "FETCH_ERROR", error: error.message } };
         }
       },
       providesTags: (result) =>
@@ -76,7 +76,7 @@ export const firebaseUsersApiSlice = createApi({
           const result = await userService.getStaffMembers();
           return { data: result };
         } catch (error) {
-          return { error: { status: 'FETCH_ERROR', error: error.message } };
+          return { error: { status: "FETCH_ERROR", error: error.message } };
         }
       },
       providesTags: (result) =>
@@ -94,7 +94,7 @@ export const firebaseUsersApiSlice = createApi({
           await userService.deleteUser(userId);
           return { data: undefined };
         } catch (error) {
-          return { error: { status: 'FETCH_ERROR', error: error.message } };
+          return { error: { status: "FETCH_ERROR", error: error.message } };
         }
       },
       invalidatesTags: (result, error, id) => [{ type: "User", id }],
@@ -106,7 +106,7 @@ export const firebaseUsersApiSlice = createApi({
           const result = await userService.getUserById(id);
           return { data: result };
         } catch (error) {
-          return { error: { status: 'FETCH_ERROR', error: error.message } };
+          return { error: { status: "FETCH_ERROR", error: error.message } };
         }
       },
       providesTags: (result, error, id) => [{ type: "User", id }],
@@ -118,10 +118,12 @@ export const firebaseUsersApiSlice = createApi({
           const result = await userService.updateUser(userId, data);
           return { data: result };
         } catch (error) {
-          return { error: { status: 'FETCH_ERROR', error: error.message } };
+          return { error: { status: "FETCH_ERROR", error: error.message } };
         }
       },
-      invalidatesTags: (result, error, { userId }) => [{ type: "User", id: userId }],
+      invalidatesTags: (result, error, { userId }) => [
+        { type: "User", id: userId },
+      ],
     }),
 
     getCurrentUser: builder.query({
@@ -130,10 +132,11 @@ export const firebaseUsersApiSlice = createApi({
           const result = await userService.getCurrentUserData();
           return { data: result };
         } catch (error) {
-          return { error: { status: 'FETCH_ERROR', error: error.message } };
+          return { error: { status: "FETCH_ERROR", error: error.message } };
         }
       },
-      providesTags: (result) => result ? [{ type: "User", id: result.id }] : [],
+      providesTags: (result) =>
+        result ? [{ type: "User", id: result.id }] : [],
     }),
   }),
 });

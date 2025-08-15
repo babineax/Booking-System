@@ -9,16 +9,9 @@
     "resolveJsonModule": true,
     "noEmit": true,
     "isolatedModules": true,
-    "types": [
-      "react",
-      "react-native",
-      "expo",
-      "nativewind/types"
-    ],
+    "types": ["react", "react-native", "expo", "nativewind/types"],
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     }
   },
   "include": [
@@ -27,10 +20,14 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "nativewind-env.d.ts",
-    "types/**/*.d.ts"
+    "types/**/*.d.ts",
+    "src/redux/features/auth/authThunk.js"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "../firebase_admin",
+    "../admin",
+    "../firebase" // Exclude shared backend firebase folder
   ],
   "extends": "expo/tsconfig.base"
 }

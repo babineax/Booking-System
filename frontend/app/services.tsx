@@ -1,11 +1,11 @@
 'use client';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useGetServicesQuery } from '../src/redux/apis/servicesApiSlice';
+import { useGetActiveServicesQuery } from '../src/redux/apis/firebaseServicesApiSlice';
 
 
 type Service = {
-  _id: string;
+  id?: string;
   name: string;
   description?: string;
   price?: number;
@@ -15,7 +15,7 @@ type Service = {
 
 export default function ServiceListScreen() {
   const router = useRouter();
-  const { data: services = [], isLoading, error } = useGetServicesQuery({});
+  const { data: services = [], isLoading, error } = useGetActiveServicesQuery({} as any);
 
   if (isLoading) {
     return (
@@ -27,9 +27,13 @@ export default function ServiceListScreen() {
   }
 
   if (error) {
+    console.error('Service loading error:', error);
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>Error loading services</Text>
+        <Text style={[styles.errorText, { fontSize: 14, marginTop: 8 }]}>
+          {(error as any)?.error || 'Unknown error occurred'}
+        </Text>
       </View>
     );
   }
@@ -39,7 +43,7 @@ export default function ServiceListScreen() {
       style={styles.serviceCard}
       onPress={() => router.push({
         pathname: '/[serviceId]',
-        params: { serviceId: item._id },
+        params: { serviceId: item.id || '' },
       })}
     >
       <Text style={styles.serviceName}>{item.name}</Text>
@@ -62,7 +66,7 @@ export default function ServiceListScreen() {
       <Text style={styles.title}>Available Services</Text>
       <FlatList
         data={services}
-        keyExtractor={(item) => item._id}
+        keyExtractor={(item) => item.id || item.name}
         renderItem={renderServiceCard}
         showsVerticalScrollIndicator={false}
       />

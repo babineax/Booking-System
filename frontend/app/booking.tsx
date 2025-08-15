@@ -9,11 +9,12 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
-import { useCreateBookingMutation } from "../src/redux/apis/bookingsApiSlice";
-import { useGetServicesQuery } from "../src/redux/apis/servicesApiSlice";
+import { useSelector } from "react-redux";
+import { useCreateBookingMutation } from "../src/redux/apis/firebaseBookingsApiSlice";
+import { useGetActiveServicesQuery } from "../src/redux/apis/firebaseServicesApiSlice";
 
 type Service = {
-  _id: string;
+  id?: string;
   name: string;
   duration: number;
   price: number;
@@ -29,11 +30,15 @@ export default function BookingPage() {
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedServiceId, setSelectedServiceId] = useState("");
 
+  
+  const { userInfo, firebaseUser } = useSelector((state: any) => state.auth);
+  const currentUserId = userInfo?.id || firebaseUser?.uid || "guest-user";
+
   const {
     data: services = [],
     isLoading: servicesLoading,
     error: servicesError,
-  } = useGetServicesQuery({});
+  } = useGetActiveServicesQuery({} as any);
   const [createBooking, { isLoading: bookingLoading }] =
     useCreateBookingMutation();
 
@@ -44,7 +49,7 @@ export default function BookingPage() {
   const handleConfirmBooking = async () => {
     try {
       const selectedService = services.find(
-        (s: Service) => s._id === selectedServiceId
+        (s: Service) => s.id === selectedServiceId
       );
 
       if (!selectedService) {
@@ -60,16 +65,18 @@ export default function BookingPage() {
         return;
       }
 
-      const staffMemberId =
-        selectedService.staffMembers[0]?._id || selectedService.staffMembers[0];
-
+      const staffMemberId = selectedService.staffMembers[0];
       const timeIn24Hour = convertTo24Hour(selectedTime);
+      const endTime = addMinutesToTime(timeIn24Hour, selectedService.duration);
 
       const bookingData = {
+        customerId: currentUserId,
         serviceId: selectedServiceId,
         staffMemberId,
-        appointmentDate: new Date(selectedDate).toISOString().split("T")[0],
+        appointmentDate: new Date(selectedDate),
         startTime: timeIn24Hour,
+        endTime: endTime,
+        totalPrice: selectedService.price,
         customerNotes: "",
       };
 
@@ -106,8 +113,19 @@ export default function BookingPage() {
     return `${hours.padStart(2, "0")}:${minutes}`;
   };
 
+  const addMinutesToTime = (time: string, minutes: number) => {
+    const [hours, mins] = time.split(":").map(Number);
+    const date = new Date();
+    date.setHours(hours, mins + minutes);
+    return date.toLocaleTimeString("en-US", {
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   const selectedService =
-    services.find((s: Service) => s._id === selectedServiceId) || null;
+    services.find((s: Service) => s.id === selectedServiceId) || null;
 
   if (servicesLoading) {
     return (

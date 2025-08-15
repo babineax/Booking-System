@@ -5,7 +5,7 @@ type Props = {
   date: string;
   time: string;
   service: {
-    _id: string;
+    id?: string;
     name: string;
     duration: number;
     price: number;

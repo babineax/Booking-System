@@ -1,5 +1,5 @@
 "use client";
-import { useGetServiceByIdQuery } from "@/src/redux/apis/servicesApiSlice";
+import { useGetServiceByIdQuery } from "@/src/redux/apis/firebaseServicesApiSlice";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Button, Text, View } from "react-native";
 

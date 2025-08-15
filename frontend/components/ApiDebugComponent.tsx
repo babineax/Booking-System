@@ -1,12 +1,12 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useGetActiveServicesQuery } from '../src/redux/apis/firebaseServicesApiSlice';
+import { useGetStaffMembersQuery } from '../src/redux/apis/firebaseUsersApiSlice';
 import { useHealthCheckQuery } from '../src/redux/apis/healthApiSlice';
-import { useGetServicesQuery } from '../src/redux/apis/servicesApiSlice';
-import { useGetStaffMembersQuery } from '../src/redux/apis/usersApiSlice';
 
 const ApiDebugComponent = () => {
   const { data: healthData, error: healthError, isLoading: healthLoading } = useHealthCheckQuery({});
-  const { data: servicesData, error: servicesError, isLoading: servicesLoading } = useGetServicesQuery({});
-  const { data: staffData, error: staffError, isLoading: staffLoading } = useGetStaffMembersQuery({});
+  const { data: servicesData, error: servicesError, isLoading: servicesLoading } = useGetActiveServicesQuery({} as any);
+  const { data: staffData, error: staffError, isLoading: staffLoading } = useGetStaffMembersQuery({} as any);
 
   return (
     <View style={styles.container}>

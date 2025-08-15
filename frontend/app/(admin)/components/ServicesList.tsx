@@ -2,24 +2,18 @@
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useGetServicesQuery } from '../../../src/redux/apis/firebaseServicesApiSlice';
 
 // Define a type for a service object
 type Service = {
-  id: string;
+  id?: string;
   name: string;
 };
 
-// Placeholder data - this would eventually come from an API
-const servicesData: Service[] = [
-  { id: '1', name: 'Haircut' },
-  { id: '2', name: 'Coloring' },
-  { id: '3', name: 'Beard Trim' },
-];
-
 const ServicesList = () => {
   const router = useRouter();
+  const { data: services = [], isLoading, error } = useGetServicesQuery({} as any);
 
   // Type the serviceId parameter as a string
   const handlePressService = (serviceId: string) => {
@@ -31,12 +25,29 @@ const ServicesList = () => {
   const renderServiceItem = ({ item }: { item: Service }) => (
     <TouchableOpacity 
       style={styles.serviceItem} 
-      onPress={() => handlePressService(item.id)}
+      onPress={() => handlePressService(item.id || '')}
     >
       <Text style={styles.serviceText}>{item.name}</Text>
       <MaterialCommunityIcons name="chevron-right" size={24} color="#555" />
     </TouchableOpacity>
   );
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color="#007BFF" />
+        <Text style={styles.loadingText}>Loading services...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.errorContainer]}>
+        <Text style={styles.errorText}>Error loading services</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -49,9 +60,9 @@ const ServicesList = () => {
       </View>
       
       <FlatList
-        data={servicesData}
+        data={services}
         renderItem={renderServiceItem}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item.id || item.name}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
     </View>
@@ -69,6 +80,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 2,
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 100,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 100,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#f44336',
   },
   header: {
     flexDirection: 'row',

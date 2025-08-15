@@ -2,9 +2,9 @@
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { StyleSheet, Text, TouchableOpacity, View, FlatList, ScrollView } from 'react-native';
+import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLogoutMutation } from '../../src/redux/apis/usersApiSlice';
+import { useLogoutMutation } from '../../src/redux/apis/firebaseUsersApiSlice';
 import { logout as logoutAction } from '../../src/redux/features/auth/authSlice';
 import ServicesList from './components/ServicesList';
 

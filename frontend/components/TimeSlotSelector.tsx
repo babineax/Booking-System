@@ -1,6 +1,6 @@
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useGetAvailableSlotsQuery } from "../src/redux/apis/bookingsApiSlice";
-import { useGetServicesQuery } from "../src/redux/apis/servicesApiSlice";
+import { useGetAvailableTimeSlotsQuery } from "../src/redux/apis/firebaseBookingsApiSlice";
+import { useGetActiveServicesQuery } from "../src/redux/apis/firebaseServicesApiSlice";
 
 type Props = {
   date: string;
@@ -14,12 +14,12 @@ type Props = {
 
 const TimeSlotSelector = ({ date, time, setTime, onNext, onBack, serviceId, staffMemberId }: Props) => {
   
-  const { data: services = [] } = useGetServicesQuery({});
-  const selectedService = services.find((service: any) => service._id === serviceId);
+  const { data: services = [] } = useGetActiveServicesQuery({} as any);
+  const selectedService = services.find((service: any) => service.id === serviceId);
   
  
   const defaultStaffId = staffMemberId || 
-    (selectedService?.staffMembers?.[0]?._id || selectedService?.staffMembers?.[0]);
+    (selectedService?.staffMembers?.[0]);
   
  
   console.log('TimeSlotSelector Debug:', {
@@ -34,7 +34,7 @@ const TimeSlotSelector = ({ date, time, setTime, onNext, onBack, serviceId, staf
     data: slotsData = [], 
     isLoading: loading, 
     error 
-  } = useGetAvailableSlotsQuery(
+  } = useGetAvailableTimeSlotsQuery(
     { 
       date: date ? new Date(date).toISOString().split('T')[0] : '', 
       serviceId, 
@@ -44,8 +44,8 @@ const TimeSlotSelector = ({ date, time, setTime, onNext, onBack, serviceId, staf
   );
 
   
-  const slots = slotsData.map((slot: any) => {
-    const time = new Date(`2000-01-01T${slot.startTime}`);
+  const slots = slotsData.map((slot: string) => {
+    const time = new Date(`2000-01-01T${slot}`);
     return time.toLocaleTimeString('en-US', { 
       hour: '2-digit', 
       minute: '2-digit',

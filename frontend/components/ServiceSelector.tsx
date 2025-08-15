@@ -2,7 +2,7 @@ import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native
 
 
 type Service = {
-  _id: string; 
+  id?: string; 
   name: string;
   description?: string;
   duration?: number; 
@@ -25,14 +25,14 @@ const ServiceSelector = ({ service, setService, onNext, onBack, services }: Prop
 
       <FlatList
         data={services}
-        keyExtractor={(item) => item._id}
+        keyExtractor={(item) => item.id || item.name}
         style={styles.list}
         renderItem={({ item }) => {
-          const isSelected = service === item._id;
+          const isSelected = service === item.id;
 
           return (
             <TouchableOpacity
-              onPress={() => setService(item._id)}
+              onPress={() => setService(item.id || '')}
               style={[
                 styles.serviceItem,
                 isSelected ? styles.selectedItem : styles.unselectedItem

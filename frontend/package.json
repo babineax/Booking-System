@@ -10,8 +10,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "seed:web": "open scripts/seed.html",
-    "seed:browser": "echo 'Opening seeding page in browser...' && open scripts/seed.html",
-    "seed": "cd firebase && ts-node scripts/seed.ts"
+    "seed:browser": "echo 'Opening seeding page in browser...' && open scripts/seed.html"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
@@ -39,7 +38,6 @@
     "expo-system-ui": "~5.0.10",
     "expo-web-browser": "~14.2.0",
     "firebase": "^12.1.0",
-    "firebase-admin": "^13.4.0",
     "lucide-react": "^0.536.0",
     "lucide-react-native": "^0.536.0",
     "nativewind": "^4.1.23",

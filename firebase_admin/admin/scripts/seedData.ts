@@ -1,5 +1,5 @@
-import { auth, db } from "../../firebase/config/firebase_admin"; // use Admin SDK
 import type { UserRecord } from "firebase-admin/auth";
+import { auth, db } from "../firebase_admin"; // use Admin SDK
 
 // ---------------------- TYPES ----------------------
 interface UserInput {

@@ -1,4 +1,4 @@
-import { seedDatabase } from "./seedData.ts";
+import { seedDatabase } from "./seedData";
 
 (async () => {
   try {

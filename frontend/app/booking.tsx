@@ -30,7 +30,6 @@ export default function BookingPage() {
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedServiceId, setSelectedServiceId] = useState("");
 
-  
   const { userInfo, firebaseUser } = useSelector((state: any) => state.auth);
   const currentUserId = userInfo?.id || firebaseUser?.uid || "guest-user";
 
@@ -89,7 +88,7 @@ export default function BookingPage() {
       });
 
       setTimeout(() => {
-        router.replace("/");
+        router.replace("/(app)");
       }, 2000);
     } catch (error) {
       console.error(error);

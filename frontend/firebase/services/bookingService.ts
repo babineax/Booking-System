@@ -80,7 +80,11 @@ class BookingService {
         customerId: bookingData.customerId,
         serviceId: bookingData.serviceId,
         staffMemberId: bookingData.staffMemberId,
-        appointmentDate: Timestamp.fromDate(bookingData.appointmentDate),
+        appointmentDate: Timestamp.fromDate(
+          bookingData.appointmentDate instanceof Date
+            ? bookingData.appointmentDate
+            : new Date(bookingData.appointmentDate)
+        ),
         startTime: bookingData.startTime,
         endTime: bookingData.endTime,
         status: "pending",
@@ -149,12 +153,9 @@ class BookingService {
           };
         }) as Booking[];
       } catch (indexError: any) {
-       
         if (indexError.message?.includes("index")) {
           console.warn("Index not ready, fetching without ordering");
-          const bookingsQuery = query(
-            collection(db, this.bookingsCollection)
-          );
+          const bookingsQuery = query(collection(db, this.bookingsCollection));
           const querySnapshot = await getDocs(bookingsQuery);
           const bookings = querySnapshot.docs.map((doc) => {
             const data = doc.data();
@@ -165,11 +166,16 @@ class BookingService {
                 data.appointmentDate?.toDate() || data.appointmentDate,
             };
           }) as Booking[];
-          
-          
+
           return bookings.sort((a, b) => {
-            const dateA = a.appointmentDate instanceof Timestamp ? a.appointmentDate.toDate() : new Date(a.appointmentDate);
-            const dateB = b.appointmentDate instanceof Timestamp ? b.appointmentDate.toDate() : new Date(b.appointmentDate);
+            const dateA =
+              a.appointmentDate instanceof Timestamp
+                ? a.appointmentDate.toDate()
+                : new Date(a.appointmentDate);
+            const dateB =
+              b.appointmentDate instanceof Timestamp
+                ? b.appointmentDate.toDate()
+                : new Date(b.appointmentDate);
             return dateB.getTime() - dateA.getTime();
           });
         }
@@ -256,12 +262,11 @@ class BookingService {
           };
         }) as Booking[];
       } catch (indexError: any) {
-        
         if (indexError.message?.includes("index")) {
           console.warn("Index not ready, filtering bookings client-side");
           const bookingsQuery = query(collection(db, this.bookingsCollection));
           const querySnapshot = await getDocs(bookingsQuery);
-          
+
           const bookings = querySnapshot.docs.map((doc) => {
             const data = doc.data();
             return {
@@ -274,15 +279,20 @@ class BookingService {
             };
           }) as Booking[];
 
-          
           return bookings
             .filter((booking) => {
               const bookingDate = booking.appointmentDate;
               return bookingDate >= startOfDay && bookingDate <= endOfDay;
             })
             .sort((a, b) => {
-              const dateA = a.appointmentDate instanceof Date ? a.appointmentDate : (a.appointmentDate as Timestamp).toDate();
-              const dateB = b.appointmentDate instanceof Date ? b.appointmentDate : (b.appointmentDate as Timestamp).toDate();
+              const dateA =
+                a.appointmentDate instanceof Date
+                  ? a.appointmentDate
+                  : (a.appointmentDate as Timestamp).toDate();
+              const dateB =
+                b.appointmentDate instanceof Date
+                  ? b.appointmentDate
+                  : (b.appointmentDate as Timestamp).toDate();
               return dateA.getTime() - dateB.getTime();
             });
         }

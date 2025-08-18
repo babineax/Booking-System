@@ -1,6 +1,13 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useDispatch } from "react-redux";
 import { userService } from "../firebase/services/userService";
 import { setCredentials } from "../src/redux/features/auth/authSlice";
@@ -12,15 +19,15 @@ type RegisterForm = {
   firstName: string;
   lastName: string;
   phone: string;
-  role: 'customer' | 'staff' | 'admin';
+  role: "customer" | "staff" | "admin";
 };
-type FormField = keyof RegisterForm;
+type FormField = keyof Omit<RegisterForm, "role" | "confirmPassword">;
 
 const RegisterScreen = () => {
   const router = useRouter();
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [form, setForm] = useState<RegisterForm>({
     username: "",
     email: "",
@@ -30,7 +37,7 @@ const RegisterScreen = () => {
     phone: "",
     role: "customer",
   });
-  
+
   const fields: FormField[] = [
     "username",
     "email",
@@ -42,7 +49,13 @@ const RegisterScreen = () => {
 
   const handleSubmit = async () => {
     // Basic validation
-    if (!form.username || !form.email || !form.password || !form.firstName || !form.lastName) {
+    if (
+      !form.username ||
+      !form.email ||
+      !form.password ||
+      !form.firstName ||
+      !form.lastName
+    ) {
       Alert.alert("Error", "Please fill in all required fields");
       return;
     }
@@ -50,14 +63,16 @@ const RegisterScreen = () => {
     try {
       setIsLoading(true);
       const { user, firebaseUser } = await userService.register(form);
-      
+
       // Set credentials in Redux store
-      dispatch(setCredentials({
-        user: user,
-        token: await firebaseUser.getIdToken(),
-        isAdmin: user.isAdmin
-      }));
-      
+      dispatch(
+        setCredentials({
+          user: user,
+          token: await firebaseUser.getIdToken(),
+          isAdmin: user.isAdmin,
+        })
+      );
+
       Alert.alert("Success", "Registration successful!", [
         {
           text: "OK",
@@ -68,10 +83,13 @@ const RegisterScreen = () => {
               router.replace("/(app)");
             }
           },
-        }
+        },
       ]);
     } catch (error: any) {
-      Alert.alert("Registration Failed", error?.message || "Registration failed. Please try again.");
+      Alert.alert(
+        "Registration Failed",
+        error?.message || "Registration failed. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -91,18 +109,18 @@ const RegisterScreen = () => {
           style={{ borderBottomWidth: 1, marginBottom: 10 }}
         />
       ))}
-      
-      <TouchableOpacity 
-        style={styles.registerButton} 
-        onPress={handleSubmit} 
+
+      <TouchableOpacity
+        style={styles.registerButton}
+        onPress={handleSubmit}
         disabled={isLoading}
       >
         <Text style={styles.buttonText}>
           {isLoading ? "Registering..." : "Register"}
         </Text>
       </TouchableOpacity>
-      
-      <TouchableOpacity onPress={() => router.push('/login')}>
+
+      <TouchableOpacity onPress={() => router.push("/login")}>
         <Text style={styles.loginLink}>Already have an account? Login</Text>
       </TouchableOpacity>
     </View>
@@ -111,21 +129,21 @@ const RegisterScreen = () => {
 
 const styles = StyleSheet.create({
   registerButton: {
-    backgroundColor: '#00BCD4',
+    backgroundColor: "#00BCD4",
     borderRadius: 25,
     paddingVertical: 15,
     paddingHorizontal: 40,
     marginVertical: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   loginLink: {
-    color: '#00BCD4',
-    textAlign: 'center',
+    color: "#00BCD4",
+    textAlign: "center",
     marginTop: 10,
   },
 });

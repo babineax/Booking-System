@@ -86,10 +86,15 @@ const RegisterScreen = () => {
         },
       ]);
     } catch (error: any) {
-      Alert.alert(
-        "Registration Failed",
-        error?.message || "Registration failed. Please try again."
-      );
+      let message = "Registration failed. Please try again.";
+      if (error.code === "auth/email-already-in-use") {
+        message = "That email is already registered.";
+      } else if (error.code === "auth/invalid-email") {
+        message = "Invalid email format.";
+      } else if (error.code === "auth/weak-password") {
+        message = "Password should be at least 6 characters.";
+      }
+      Alert.alert("Registration Failed", message);
     } finally {
       setIsLoading(false);
     }

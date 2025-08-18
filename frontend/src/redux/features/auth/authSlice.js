@@ -12,7 +12,10 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setCredentials: (state, action) => {
-      state.userInfo = action.payload.user;
+      state.userInfo = {
+        ...action.payload.user,
+        role: action.payload.user?.role || "user", // ✅ pull role from Firestore or fallback
+      };
       state.firebaseUser = action.payload.firebaseUser;
       state.isAuthenticated = true;
       state.isLoading = false;

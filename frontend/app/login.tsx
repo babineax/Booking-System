@@ -1,68 +1,79 @@
 // File: frontend/app/login.tsx
 
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useDispatch } from 'react-redux';
-import { userService } from '../firebase/services/userService';
-import { setCredentials } from '../src/redux/features/auth/authSlice';
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import {
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useDispatch } from "react-redux";
+import { userService } from "../firebase/services/userService";
+import { setCredentials } from "../src/redux/features/auth/authSlice";
 
 const LoginScreen = () => {
   const router = useRouter();
   const dispatch = useDispatch();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      Alert.alert("Error", "Please enter a valid email address");
       return;
     }
 
     try {
       setIsLoading(true);
-      console.log('Attempting login with email:', email.trim());
-      
-      const { user, firebaseUser } = await userService.login({ 
-        email: email.trim().toLowerCase(), 
-        password 
-      });
-      
-      console.log('Login successful, user:', user);
-      
-      // Set credentials in Redux store
-      dispatch(setCredentials({
-        user: user,
-        token: await firebaseUser.getIdToken(),
-        isAdmin: user.isAdmin
-      }));
-      
-      console.log('Credentials set, navigating...');
-      
-      if (user.isAdmin) {
-        router.replace('/(admin)');
-      } else {
-        router.replace('/(app)');
-      }
+      console.log("Attempting login with email:", email.trim());
 
+      const { user, firebaseUser } = await userService.login({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+
+      console.log("Login successful, user:", user);
+
+      // Set credentials in Redux store
+      dispatch(
+        setCredentials({
+          user: user,
+          token: await firebaseUser.getIdToken(),
+          isAdmin: user.isAdmin,
+        })
+      );
+
+      console.log("Credentials set, navigating...");
+
+      if (user.role === "admin") {
+        router.replace("/(admin)");
+      } else if (user.role === "staff") {
+        router.replace("/(admin)");
+      } else {
+        router.replace("/(app)");
+      }
     } catch (error: any) {
-      console.error('Login error:', error);
-      
-      let errorMessage = 'Login failed. Please try again.';
+      console.error("Login error:", error);
+
+      let errorMessage = "Login failed. Please try again.";
       if (error.message) {
         errorMessage = error.message;
       }
-      
-      Alert.alert('Login Failed', errorMessage);
+
+      Alert.alert("Login Failed", errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -71,13 +82,21 @@ const LoginScreen = () => {
   return (
     <View style={styles.container}>
       {/* Logo */}
-      <Image source={require('../assets/images/logo.png')} style={styles.logo} />
+      <Image
+        source={require("../assets/images/logo.png")}
+        style={styles.logo}
+      />
 
       <Text style={styles.title}>Login</Text>
 
       {/* Email Input */}
       <View style={styles.inputContainer}>
-        <MaterialCommunityIcons name="email-outline" size={20} color="#00BCD4" style={styles.icon} />
+        <MaterialCommunityIcons
+          name="email-outline"
+          size={20}
+          color="#00BCD4"
+          style={styles.icon}
+        />
         <TextInput
           placeholder="Email Address"
           style={styles.input}
@@ -92,7 +111,12 @@ const LoginScreen = () => {
 
       {/* Password Input */}
       <View style={styles.inputContainer}>
-        <MaterialCommunityIcons name="lock-outline" size={20} color="#00BCD4" style={styles.icon} />
+        <MaterialCommunityIcons
+          name="lock-outline"
+          size={20}
+          color="#00BCD4"
+          style={styles.icon}
+        />
         <TextInput
           placeholder="Password"
           secureTextEntry
@@ -109,13 +133,13 @@ const LoginScreen = () => {
       </TouchableOpacity>
 
       {/* Login Button */}
-      <TouchableOpacity 
-        style={styles.loginButton} 
+      <TouchableOpacity
+        style={styles.loginButton}
         onPress={handleLogin}
         disabled={isLoading}
       >
         <Text style={styles.loginText}>
-          {isLoading ? 'Logging in...' : 'Login'}
+          {isLoading ? "Logging in..." : "Login"}
         </Text>
       </TouchableOpacity>
 
@@ -124,17 +148,26 @@ const LoginScreen = () => {
       {/* Social Login */}
       <View style={styles.socialContainer}>
         <TouchableOpacity>
-          <Image source={require('../assets/images/Google.png')} style={styles.socialIcon} />
+          <Image
+            source={require("../assets/images/Google.png")}
+            style={styles.socialIcon}
+          />
         </TouchableOpacity>
         <TouchableOpacity>
-          <Image source={require('../assets/images/Facebook.png')} style={styles.socialIcon} />
+          <Image
+            source={require("../assets/images/Facebook.png")}
+            style={styles.socialIcon}
+          />
         </TouchableOpacity>
       </View>
 
       {/* Sign Up Prompt */}
       <Text style={styles.signupPrompt}>
-        Don't Have an Account?{' '}
-        <Text style={styles.signupText} onPress={() => router.push('/register')}>
+        Don&#39;t Have an Account?{" "}
+        <Text
+          style={styles.signupText}
+          onPress={() => router.push("/register")}
+        >
           Sign Up
         </Text>
       </Text>
@@ -145,9 +178,9 @@ const LoginScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
     padding: 20,
   },
   logo: {
@@ -157,22 +190,22 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 40,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 25,
     paddingHorizontal: 15,
     marginBottom: 20,
-    width: '100%',
+    width: "100%",
     height: 50,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
@@ -184,42 +217,42 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   forgotPassword: {
-    color: '#00BCD4',
+    color: "#00BCD4",
     fontSize: 14,
     marginBottom: 30,
-    textAlign: 'right',
-    width: '100%',
+    textAlign: "right",
+    width: "100%",
   },
   loginButton: {
-    backgroundColor: '#00BCD4',
+    backgroundColor: "#00BCD4",
     borderRadius: 25,
     paddingVertical: 15,
     paddingHorizontal: 40,
     marginBottom: 20,
-    width: '100%',
-    alignItems: 'center',
-    shadowColor: '#000',
+    width: "100%",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
     elevation: 3,
   },
   loginText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   orText: {
-    color: '#666',
+    color: "#666",
     fontSize: 16,
     marginVertical: 20,
   },
   socialContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     width: 120,
     marginBottom: 30,
   },
@@ -229,11 +262,11 @@ const styles = StyleSheet.create({
   },
   signupPrompt: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
   signupText: {
-    color: '#00BCD4',
-    fontWeight: 'bold',
+    color: "#00BCD4",
+    fontWeight: "bold",
   },
 });
 

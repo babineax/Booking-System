@@ -1,5 +1,9 @@
-import { CheckCircle2 } from "lucide-react-native";
+import { Calendar, CheckCircle2 } from "lucide-react-native";
+import { useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Toast from "react-native-toast-message";
+import { useAuth } from "../firebase/providers/AuthProvider";
+import { googleCalendarService } from "../firebase/services";
 
 type Props = {
   date: string;
@@ -23,6 +27,63 @@ const BookingConfirmation = ({
   onConfirm,
   onEdit,
 }: Props) => {
+  const { firebaseUser } = useAuth();
+  const [isAddingToCalendar, setIsAddingToCalendar] = useState(false);
+  
+  const handleAddToCalendar = async () => {
+    if (!firebaseUser) {
+      Toast.show({
+        type: "error",
+        text1: "Sign in required",
+        text2: "Please sign in to add to Google Calendar",
+      });
+      return;
+    }
+
+    try {
+      setIsAddingToCalendar(true);
+      
+      
+      const credentials = await googleCalendarService.getStoredCredentials(firebaseUser.uid);
+      
+     
+      if (!credentials) {
+        await googleCalendarService.authorize();
+      }
+      
+      
+      const eventDateTime = new Date(date + " " + time);
+      const endDateTime = new Date(eventDateTime.getTime() + (service?.duration || 0) * 60000);
+      
+      await googleCalendarService.createCalendarEvent(firebaseUser.uid, {
+        summary: `Appointment: ${service?.name}`,
+        description: `Booking for ${service?.name}\nDuration: ${service?.duration} minutes\nPrice: KES ${service?.price}`,
+        start: {
+          dateTime: eventDateTime.toISOString(),
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
+        end: {
+          dateTime: endDateTime.toISOString(),
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        }
+      });
+      
+      Toast.show({
+        type: "success",
+        text1: "Added to Calendar",
+        text2: "Your booking has been added to Google Calendar",
+      });
+    } catch (error: any) {
+      console.error("Error adding to calendar:", error);
+      Toast.show({
+        type: "error",
+        text1: "Calendar Error",
+        text2: error.message || "Failed to add to Google Calendar",
+      });
+    } finally {
+      setIsAddingToCalendar(false);
+    }
+  };
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -67,6 +128,20 @@ const BookingConfirmation = ({
           <Text style={styles.confirmButtonText}>Confirm Booking</Text>
         </TouchableOpacity>
       </View>
+      
+      <TouchableOpacity
+        onPress={handleAddToCalendar}
+        disabled={isAddingToCalendar}
+        style={[
+          styles.calendarButton,
+          isAddingToCalendar && styles.calendarButtonDisabled
+        ]}
+      >
+        <Calendar size={20} color="#ffffff" style={styles.calendarIcon} />
+        <Text style={styles.calendarButtonText}>
+          {isAddingToCalendar ? "Adding to Calendar..." : "Add to Google Calendar"}
+        </Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 };
@@ -76,6 +151,26 @@ const styles = StyleSheet.create({
     padding: 16,
     flex: 1,
     backgroundColor: '#ffffff',
+  },
+  calendarButton: {
+    backgroundColor: '#10b981',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  calendarButtonDisabled: {
+    opacity: 0.7,
+  },
+  calendarIcon: {
+    marginRight: 8,
+  },
+  calendarButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
   },
   header: {
     alignItems: 'center',

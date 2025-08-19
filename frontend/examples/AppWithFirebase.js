@@ -2,7 +2,7 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Provider } from 'react-redux';
-import AuthProvider from './firebase/AuthProvider';
+import { AuthProvider } from '../firebase/providers/AuthProvider';
 import { store } from './src/redux/store';
 
 

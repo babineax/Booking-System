@@ -163,7 +163,7 @@ const LoginScreen = () => {
 
       {/* Sign Up Prompt */}
       <Text style={styles.signupPrompt}>
-        Don&#39;t Have an Account?{" "}
+        Don't Have an Account?{" "}
         <Text
           style={styles.signupText}
           onPress={() => router.push("/register")}

@@ -1,41 +1,27 @@
-// File: frontend/app/(admin)/components/ServicesList.tsx
-
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+'use client';
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useGetServicesQuery } from '../../../src/redux/apis/firebaseServicesApiSlice';
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useGetActiveServicesQuery,useDeleteServiceMutation } from '@/src/redux/apis/firebaseServicesApiSlice';
 
-// Define a type for a service object
 type Service = {
   id?: string;
   name: string;
+  description?: string;
+  price?: number;
+  duration?: number;
+  category?: string;
 };
 
-const ServicesList = () => {
+export default function AdminServiceListScreen() {
   const router = useRouter();
-  const { data: services = [], isLoading, error } = useGetServicesQuery({} as any);
-
-  // Type the serviceId parameter as a string
-  const handlePressService = (serviceId: string) => {
-    console.log('Pressed service with ID:', serviceId);
-    // router.push(`/manage-services/${serviceId}`);
-  };
-
-  // Type the 'item' parameter as the Service type
-  const renderServiceItem = ({ item }: { item: Service }) => (
-    <TouchableOpacity 
-      style={styles.serviceItem} 
-      onPress={() => handlePressService(item.id || '')}
-    >
-      <Text style={styles.serviceText}>{item.name}</Text>
-      <MaterialCommunityIcons name="chevron-right" size={24} color="#555" />
-    </TouchableOpacity>
-  );
+  const { data: services = [], isLoading, error, refetch } = useGetActiveServicesQuery({} as any);
+  const [deleteService] = useDeleteServiceMutation();
 
   if (isLoading) {
     return (
-      <View style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color="#007BFF" />
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#00BCD4" />
         <Text style={styles.loadingText}>Loading services...</Text>
       </View>
     );
@@ -43,101 +29,128 @@ const ServicesList = () => {
 
   if (error) {
     return (
-      <View style={[styles.container, styles.errorContainer]}>
+      <View style={styles.errorContainer}>
         <Text style={styles.errorText}>Error loading services</Text>
       </View>
     );
   }
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.sectionTitle}>Services</Text>
-        <TouchableOpacity style={styles.addButton} onPress={() => {/* navigate to add screen */}}>
-          <MaterialCommunityIcons name="plus" size={20} color="#fff" />
-          <Text style={styles.addButtonText}>Add Service</Text>
+  const handleDelete = (id?: string) => {
+    if (!id) return;
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to delete this service?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteService(id).unwrap();
+              refetch();
+            } catch (err) {
+              console.error('Delete error:', err);
+            }
+          } 
+        }
+      ]
+    );
+  };
+
+  const renderServiceCard = ({ item }: { item: Service }) => (
+    <View style={styles.serviceCard}>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.serviceName}>{item.name}</Text>
+        {item.description && <Text style={styles.serviceDescription}>{item.description}</Text>}
+        <View style={styles.serviceDetails}>
+          {item.duration && <Text style={styles.serviceDuration}>{item.duration} min</Text>}
+          {item.price && <Text style={styles.servicePrice}>KES {item.price}</Text>}
+        </View>
+      </View>
+      <View style={styles.actions}>
+        <TouchableOpacity 
+          style={styles.iconButton}
+          onPress={() => router.push({ pathname: '/(admin)/components/editService', params: { serviceId: item.id } })}
+        >
+          <Ionicons name="create-outline" size={22} color="#1976D2" />
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.iconButton}
+          onPress={() => handleDelete(item.id)}
+        >
+          <Ionicons name="trash-outline" size={22} color="#D32F2F" />
         </TouchableOpacity>
       </View>
-      
-      <FlatList
-        data={services}
-        renderItem={renderServiceItem}
-        keyExtractor={item => item.id || item.name}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-      />
     </View>
   );
-};
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Manage Services</Text>
+      <FlatList
+        data={services}
+        keyExtractor={(item) => item.id || item.name}
+        renderItem={renderServiceCard}
+        showsVerticalScrollIndicator={false}
+      />
+
+      {/* Floating Add Button */}
+      <TouchableOpacity 
+        style={styles.fab}
+        onPress={() => router.push('/admin/add-service')}
+      >
+        <Ionicons name="add" size={28} color="#fff" />
+      </TouchableOpacity>
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
+    flex: 1,
+    backgroundColor: '#f5f5f5',
     padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
     marginBottom: 20,
+  },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 10, fontSize: 16, color: '#666' },
+  errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  errorText: { fontSize: 16, color: '#f44336' },
+  serviceCard: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  loadingContainer: {
+  serviceName: { fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 8 },
+  serviceDescription: { fontSize: 14, color: '#666', marginBottom: 12 },
+  serviceDetails: { flexDirection: 'row', justifyContent: 'space-between' },
+  serviceDuration: { fontSize: 14, color: '#00BCD4', fontWeight: '500' },
+  servicePrice: { fontSize: 16, fontWeight: 'bold', color: '#2E7D32' },
+  actions: { flexDirection: 'row', alignItems: 'center' },
+  iconButton: { marginLeft: 10 },
+  fab: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    backgroundColor: '#00BCD4',
+    borderRadius: 50,
+    width: 56,
+    height: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: 100,
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#666',
-  },
-  errorContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: 100,
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#f44336',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#007BFF',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 5,
-  },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    marginLeft: 5,
-  },
-  serviceItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 15,
-  },
-  serviceText: {
-    fontSize: 16,
-    color: '#555',
-  },
-  separator: {
-    height: 1,
-    backgroundColor: '#f0f0f0',
+    elevation: 6,
   },
 });
-
-export default ServicesList;

@@ -1,189 +1,281 @@
-// File: frontend/app/(admin)/index.tsx
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  StyleSheet,
+  Dimensions,
+  SafeAreaView,
+  ScrollView,
+} from "react-native";
+import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLogoutMutation } from '../../src/redux/apis/firebaseUsersApiSlice';
-import { logout as logoutAction } from '../../src/redux/features/auth/authSlice';
-import ServicesList from './components/ServicesList';
+const { width } = Dimensions.get("window");
 
-// Define a type for the Redux state
-type RootState = {
-  auth: {
-    userInfo: {
-      name: string;
-      email: string;
-      role: string;
-      firstName: string;
-      username: string;
-    };
-  };
-};
+export default function DashboardScreen() {
+  const [clients, setClients] = useState([
+    { id: "1", name: "Alice Johnson", phone: "123-456-7890" },
+    { id: "2", name: "Bob Smith", phone: "987-654-3210" },
+  ]);
 
-// Define a type for a booking object
-type Booking = {
-  id: string;
-  date: string;
-  customer: string;
-  status: 'Confirmed' | 'Pending';
-};
+  const [bookings, setBookings] = useState([
+    { id: "1", client: "Alice Johnson", date: "2025-08-25", status: "Confirmed" },
+    { id: "2", client: "Bob Smith", date: "2025-08-26", status: "Pending" },
+  ]);
 
-// Placeholder data for the upcoming bookings list
-const upcomingBookings: Booking[] = [
-  { id: '1', date: '9:00 AM', customer: 'Carol Smith', status: 'Confirmed' },
-  { id: '2', date: '11:00 AM', customer: 'Michael Brown', status: 'Confirmed' },
-  { id: '3', date: '2:00 PM', customer: 'John Doe', status: 'Pending' },
-];
+  const [modalVisible, setModalVisible] = useState(false);
+  const [newClient, setNewClient] = useState({ name: "", phone: "" });
 
-const AdminDashboard = () => {
-  const router = useRouter();
-  const dispatch = useDispatch();
-  const userInfo = useSelector((state: RootState) => state.auth.userInfo);
-  const [logoutApi] = useLogoutMutation();
-
-  const handleLogout = async () => {
-    try {
-      await logoutApi({}).unwrap();
-      dispatch(logoutAction());
-      router.replace('/login');
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
+  const handleAddClient = () => {
+    if (!newClient.name || !newClient.phone) return;
+    setClients([...clients, { id: Date.now().toString(), ...newClient }]);
+    setNewClient({ name: "", phone: "" });
+    setModalVisible(false);
   };
 
-  // Type the 'item' parameter as the Booking type
-  const renderBookingItem = ({ item }: { item: Booking }) => (
-    <View style={styles.bookingRow}>
-      <Text style={styles.bookingText}>{item.date}</Text>
-      <Text style={styles.bookingText}>{item.customer}</Text>
-      <Text style={[styles.bookingText, item.status === 'Confirmed' ? styles.statusConfirmed : styles.statusPending]}>
-        {item.status}
-      </Text>
+  const StatCard = ({ icon, title, value, color }: any) => (
+    <View style={[styles.statCard, { backgroundColor: color }]}>
+      {icon}
+      <Text style={styles.statNumber}>{value}</Text>
+      <Text style={styles.statTitle}>{title}</Text>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Admin Dashboard</Text>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <MaterialCommunityIcons name="logout" size={20} color="#fff" style={styles.logoutIcon} />
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-      
-      {/* Main content, now a scrollable area for mobile */}
-      <ScrollView contentContainerStyle={styles.mainContent}>
-        {/* Upcoming Bookings Section */}
-        <View style={styles.contentSection}>
-          <Text style={styles.sectionTitle}>Upcoming</Text>
-          <View style={styles.bookingHeader}>
-            <Text style={[styles.bookingText, styles.bookingHeaderText]}>Date</Text>
-            <Text style={[styles.bookingText, styles.bookingHeaderText]}>Customer</Text>
-            <Text style={[styles.bookingText, styles.bookingHeaderText]}>Status</Text>
-          </View>
-          <FlatList
-            data={upcomingBookings}
-            renderItem={renderBookingItem}
-            keyExtractor={item => item.id}
-            scrollEnabled={false} // Disable FlatList scrolling inside ScrollView
+    <SafeAreaView style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Stats Row */}
+        <View style={styles.statsRow}>
+          <StatCard
+            icon={<Ionicons name="people" size={20} color="white" />}
+            title="Clients"
+            value={clients.length}
+            color="#4A90E2"
+          />
+          <StatCard
+            icon={<MaterialIcons name="event" size={20} color="white" />}
+            title="Bookings"
+            value={bookings.length}
+            color="#7B61FF"
+          />
+          <StatCard
+            icon={<FontAwesome5 name="dollar-sign" size={20} color="white" />}
+            title="Revenue"
+            value="$2.3k"
+            color="#34C759"
+          />
+          <StatCard
+            icon={<MaterialIcons name="build" size={20} color="white" />}
+            title="Services"
+            value="12"
+            color="#FF9500"
           />
         </View>
 
-        {/* Services List */}
-        <ServicesList />
+        {/* Clients Section */}
+        <Text style={styles.sectionTitle}>Clients</Text>
+        <FlatList
+          data={clients}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.clientCard}>
+              <View>
+                <Text style={styles.clientName}>{item.name}</Text>
+                <Text style={styles.clientPhone}>{item.phone}</Text>
+              </View>
+              <View style={styles.clientActions}>
+                <TouchableOpacity style={styles.actionBtn}>
+                  <Text style={styles.actionText}>Book</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.editBtn}>
+                  <Text style={styles.actionText}>Edit</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        />
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => setModalVisible(true)}
+        >
+          <Text style={styles.addButtonText}>+ Add Client</Text>
+        </TouchableOpacity>
+
+        {/* Bookings Section */}
+        <Text style={styles.sectionTitle}>Upcoming Bookings</Text>
+        <FlatList
+          data={bookings}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.bookingCard}>
+              <View>
+                <Text style={styles.bookingClient}>{item.client}</Text>
+                <Text style={styles.bookingDate}>{item.date}</Text>
+              </View>
+              <View
+                style={[
+                  styles.statusBadge,
+                  item.status === "Confirmed"
+                    ? styles.confirmed
+                    : styles.pending,
+                ]}
+              >
+                <Text style={styles.statusText}>{item.status}</Text>
+              </View>
+            </View>
+          )}
+        />
       </ScrollView>
-    </View>
+
+      {/* Add Client Modal */}
+      <Modal animationType="slide" transparent visible={modalVisible}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add New Client</Text>
+            <TextInput
+              placeholder="Name"
+              style={styles.input}
+              value={newClient.name}
+              onChangeText={(text) =>
+                setNewClient((prev) => ({ ...prev, name: text }))
+              }
+            />
+            <TextInput
+              placeholder="Phone"
+              style={styles.input}
+              value={newClient.phone}
+              onChangeText={(text) =>
+                setNewClient((prev) => ({ ...prev, phone: text }))
+              }
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.modalBtn} onPress={handleAddClient}>
+                <Text style={styles.modalBtnText}>Save</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.cancelBtn]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.modalBtnText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: 50, // Added padding to account for the status bar
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  mainContent: {
-    padding: 20,
-  },
-  contentSection: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
+  container: { flex: 1, backgroundColor: "#F9FAFB", padding: 16 },
+  statsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+  },
+  statCard: {
+    flex: 1,
+    marginHorizontal: 4,
+    borderRadius: 12,
+    padding: 12,
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: 4,
     elevation: 2,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#333',
-  },
-  bookingHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  bookingHeaderText: {
-    fontWeight: 'bold',
-  },
-  bookingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  bookingText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#555',
-  },
-  statusConfirmed: {
-    color: 'green',
-  },
-  statusPending: {
-    color: 'orange',
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#d9534f',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 5,
-  },
-  logoutText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginLeft: 5,
-  },
-  logoutIcon: {
-    marginRight: 5,
-  },
-});
+  statNumber: { fontSize: 18, fontWeight: "bold", color: "white", marginTop: 6 },
+  statTitle: { fontSize: 12, color: "white" },
 
-export default AdminDashboard;
+  sectionTitle: { fontSize: 18, fontWeight: "600", marginBottom: 10, marginTop: 20 },
+
+  clientCard: {
+    backgroundColor: "white",
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    elevation: 2,
+  },
+  clientName: { fontSize: 16, fontWeight: "600" },
+  clientPhone: { fontSize: 13, color: "#555" },
+  clientActions: { flexDirection: "row" },
+  actionBtn: {
+    backgroundColor: "#4A90E2",
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    marginRight: 8,
+  },
+  editBtn: {
+    backgroundColor: "#FF9500",
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+  },
+  actionText: { color: "white", fontWeight: "600", fontSize: 12 },
+  addButton: {
+    backgroundColor: "#34C759",
+    padding: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  addButtonText: { color: "white", fontWeight: "600", fontSize: 16 },
+
+  bookingCard: {
+    backgroundColor: "white",
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    elevation: 2,
+  },
+  bookingClient: { fontSize: 16, fontWeight: "600" },
+  bookingDate: { fontSize: 13, color: "#555" },
+  statusBadge: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+  },
+  confirmed: { backgroundColor: "#34C759" },
+  pending: { backgroundColor: "#FF9500" },
+  statusText: { color: "white", fontWeight: "600", fontSize: 12 },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+  },
+  modalTitle: { fontSize: 18, fontWeight: "600", marginBottom: 12 },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 12,
+  },
+  modalButtons: { flexDirection: "row", justifyContent: "flex-end" },
+  modalBtn: {
+    backgroundColor: "#4A90E2",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginLeft: 10,
+  },
+  cancelBtn: { backgroundColor: "#999" },
+  modalBtnText: { color: "white", fontWeight: "600" },
+});

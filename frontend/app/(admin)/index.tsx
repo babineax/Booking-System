@@ -1,17 +1,18 @@
-import React, { useState } from "react";
+import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  Modal,
-  TextInput,
-  StyleSheet,
   Dimensions,
+  FlatList,
+  Modal,
   SafeAreaView,
   ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 
 const { width } = Dimensions.get("window");
 
@@ -22,12 +23,19 @@ export default function DashboardScreen() {
   ]);
 
   const [bookings, setBookings] = useState([
-    { id: "1", client: "Alice Johnson", date: "2025-08-25", status: "Confirmed" },
+    {
+      id: "1",
+      client: "Alice Johnson",
+      date: "2025-08-25",
+      status: "Confirmed",
+    },
     { id: "2", client: "Bob Smith", date: "2025-08-26", status: "Pending" },
   ]);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [newClient, setNewClient] = useState({ name: "", phone: "" });
+
+  const router = useRouter();
 
   const handleAddClient = () => {
     if (!newClient.name || !newClient.phone) return;
@@ -46,7 +54,11 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1 }}
+        horizontal={false}
+      >
         {/* Stats Row */}
         <View style={styles.statsRow}>
           <StatCard
@@ -87,7 +99,10 @@ export default function DashboardScreen() {
                 <Text style={styles.clientPhone}>{item.phone}</Text>
               </View>
               <View style={styles.clientActions}>
-                <TouchableOpacity style={styles.actionBtn}>
+                <TouchableOpacity
+                  style={styles.actionBtn}
+                  onPress={() => router.push("/booking}")}
+                >
                   <Text style={styles.actionText}>Book</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.editBtn}>
@@ -152,7 +167,10 @@ export default function DashboardScreen() {
               }
             />
             <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.modalBtn} onPress={handleAddClient}>
+              <TouchableOpacity
+                style={styles.modalBtn}
+                onPress={handleAddClient}
+              >
                 <Text style={styles.modalBtnText}>Save</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -173,12 +191,13 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F9FAFB", padding: 16 },
   statsRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
     marginBottom: 20,
   },
   statCard: {
-    flex: 1,
-    marginHorizontal: 4,
+    width: "48%", // ✅ two cards per row (instead of squeezing all 4)
+    marginBottom: 12, // ✅ spacing between rows
     borderRadius: 12,
     padding: 12,
     alignItems: "center",
@@ -187,10 +206,21 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  statNumber: { fontSize: 18, fontWeight: "bold", color: "white", marginTop: 6 },
+  statNumber: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "white",
+    marginTop: 6,
+  },
   statTitle: { fontSize: 12, color: "white" },
 
-  sectionTitle: { fontSize: 18, fontWeight: "600", marginBottom: 10, marginTop: 20 },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 12,
+    marginTop: 24,
+    color: "#111",
+  },
 
   clientCard: {
     backgroundColor: "white",
@@ -200,33 +230,49 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    elevation: 2,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    borderWidth: 1,
+    borderColor: "#f0f0f0", // subtle border to anchor
   },
   clientName: { fontSize: 16, fontWeight: "600" },
   clientPhone: { fontSize: 13, color: "#555" },
   clientActions: { flexDirection: "row" },
   actionBtn: {
     backgroundColor: "#4A90E2",
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 25,
     marginRight: 8,
   },
   editBtn: {
     backgroundColor: "#FF9500",
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 25,
   },
-  actionText: { color: "white", fontWeight: "600", fontSize: 12 },
+  actionText: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 13,
+    letterSpacing: 0.3,
+  },
   addButton: {
     backgroundColor: "#34C759",
     padding: 14,
-    borderRadius: 12,
+    borderRadius: 25,
     alignItems: "center",
-    marginBottom: 16,
+    marginVertical: 16,
   },
-  addButtonText: { color: "white", fontWeight: "600", fontSize: 16 },
+  addButtonText: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 16,
+    letterSpacing: 0.4,
+  },
 
   bookingCard: {
     backgroundColor: "white",
@@ -236,7 +282,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: "#f0f0f0",
   },
   bookingClient: { fontSize: 16, fontWeight: "600" },
   bookingDate: { fontSize: 13, color: "#555" },

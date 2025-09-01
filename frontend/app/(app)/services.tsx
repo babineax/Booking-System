@@ -1,7 +1,7 @@
 'use client';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useGetActiveServicesQuery } from '../src/redux/apis/firebaseServicesApiSlice';
+import { useGetServices } from '../../features/services/hooks/useGetServices';
 
 
 type Service = {
@@ -15,7 +15,7 @@ type Service = {
 
 export default function ServiceListScreen() {
   const router = useRouter();
-  const { data: services = [], isLoading, error } = useGetActiveServicesQuery({} as any);
+  const { data: services = [], isLoading, error } = useGetServices();
 
   if (isLoading) {
     return (
@@ -32,7 +32,7 @@ export default function ServiceListScreen() {
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>Error loading services</Text>
         <Text style={[styles.errorText, { fontSize: 14, marginTop: 8 }]}>
-          {(error as any)?.error || 'Unknown error occurred'}
+          {error.message || 'Unknown error occurred'}
         </Text>
       </View>
     );

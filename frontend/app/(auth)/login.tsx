@@ -13,8 +13,8 @@ import {
   View,
 } from "react-native";
 import { useDispatch } from "react-redux";
-import { userService } from "../firebase/services/userService";
-import { setCredentials } from "../src/redux/features/auth/authSlice";
+import { userService } from "../../firebase/services/userService";
+import { setCredentials } from "../../src/redux/features/auth/authSlice";
 
 const LoginScreen = () => {
   const router = useRouter();
@@ -163,7 +163,7 @@ const LoginScreen = () => {
 
       {/* Sign Up Prompt */}
       <Text style={styles.signupPrompt}>
-        Don't Have an Account?{" "}
+        Don&apos;t Have an Account?{" "}
         <Text
           style={styles.signupText}
           onPress={() => router.push("/register")}

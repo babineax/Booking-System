@@ -1,6 +1,6 @@
 import { Calendar, CheckCircle2 } from "lucide-react-native";
 import { useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
 import { useAuth } from "../firebase/providers/AuthProvider";
 import { googleCalendarService } from "../firebase/services";
@@ -18,14 +18,16 @@ type Props = {
   } | null;
   onConfirm: () => void;
   onEdit: () => void;
+  isLoading: boolean;
 };
 
-const BookingConfirmation = ({
+const BookingConfirmation = ({ 
   date,
   time,
   service,
   onConfirm,
   onEdit,
+  isLoading,
 }: Props) => {
   const { firebaseUser } = useAuth();
   const [isAddingToCalendar, setIsAddingToCalendar] = useState(false);
@@ -117,15 +119,21 @@ const BookingConfirmation = ({
         <TouchableOpacity
           onPress={onEdit}
           style={[styles.button, styles.editButton]}
+          disabled={isLoading}
         >
           <Text style={styles.editButtonText}>Edit</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           onPress={onConfirm}
-          style={[styles.button, styles.confirmButton]}
+          style={[styles.button, styles.confirmButton, isLoading && styles.disabledButton]}
+          disabled={isLoading}
         >
-          <Text style={styles.confirmButtonText}>Confirm Booking</Text>
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#ffffff" />
+          ) : (
+            <Text style={styles.confirmButtonText}>Confirm Booking</Text>
+          )}
         </TouchableOpacity>
       </View>
       
@@ -228,6 +236,9 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     backgroundColor: '#2563eb',
+  },
+  disabledButton: {
+    backgroundColor: '#9ca3af',
   },
   editButtonText: {
     fontSize: 16,

@@ -1,13 +1,18 @@
 // File: frontend/app/(staff)/index.tsx
 
-import { useRouter } from 'expo-router';
-import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
-import { logout as logoutAction } from '../../src/redux/features/auth/authSlice';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import BookingsList from './components/BookingsList';
-import StaffServicesList from './components/StaffServicesList';
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useDispatch, useSelector } from "react-redux";
+import { logout as logoutAction } from "../../../src/redux/features/auth/authSlice";
+import BookingsList from "./components/BookingsList";
+import StaffServicesList from "./components/StaffServicesList";
 
 // Define a type for the Redux state
 type RootState = {
@@ -29,7 +34,7 @@ const StaffDashboard = () => {
 
   const handleLogout = () => {
     dispatch(logoutAction());
-    router.replace('/login');
+    router.replace("/login");
   };
 
   return (
@@ -38,7 +43,12 @@ const StaffDashboard = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Staff Dashboard</Text>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <MaterialCommunityIcons name="logout" size={20} color="#fff" style={styles.logoutIcon} />
+          <MaterialCommunityIcons
+            name="logout"
+            size={20}
+            color="#fff"
+            style={styles.logoutIcon}
+          />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
@@ -58,35 +68,35 @@ const StaffDashboard = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     paddingTop: 50,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
   },
   logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#d9534f',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#d9534f",
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 5,
   },
   logoutText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginLeft: 5,
   },
   logoutIcon: {

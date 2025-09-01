@@ -9,8 +9,8 @@ import {
   View,
 } from "react-native";
 import { useDispatch } from "react-redux";
-import { userService } from "../firebase/services/userService";
-import { setCredentials } from "../src/redux/features/auth/authSlice";
+import { userService } from "../../firebase/services/userService";
+import { setCredentials } from "../../src/redux/features/auth/authSlice";
 
 type RegisterForm = {
   username: string;

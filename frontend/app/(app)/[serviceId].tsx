@@ -2,19 +2,19 @@
 import BookingStepper from "@/components/BookingStepper";
 import DatePicker from "@/components/DatePicker";
 import TimeSlotSelector from "@/components/TimeSlotSelector";
+import { useCreateBookingMutation } from "@/src/redux/apis/firebaseBookingsApiSlice";
 import { useGetServiceByIdQuery } from "@/src/redux/apis/firebaseServicesApiSlice";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
+  SafeAreaView,
+  ScrollView,
   Text,
   TouchableOpacity,
   View,
-  SafeAreaView,
-  ScrollView,
 } from "react-native";
 import { useSelector } from "react-redux";
-import { bookingService } from "../firebase/services/bookingService";
 
 // ✅ Reusable button with consistent styles
 
@@ -62,6 +62,9 @@ export default function ServiceDetailScreen() {
     skip: !serviceId,
   });
 
+  const [createBooking, { isLoading: isBookingLoading }] =
+    useCreateBookingMutation();
+
   const [step, setStep] = useState(0);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
@@ -106,19 +109,21 @@ export default function ServiceDetailScreen() {
         Alert.alert("Error", "No staff available for this service.");
         return;
       }
-
       const staffMemberId = service.staffMembers[0];
 
-      await bookingService.createBooking({
+      await createBooking({
         customerId: currentUserId,
         serviceId: serviceId as string,
         staffMemberId,
-        appointmentDate: new Date(selectedDate),
+        appointmentDate: new Date(selectedDate).toISOString(),
         startTime: selectedTime,
-        endTime: "",
+        endTime: "", // This should be calculated based on start time and duration
         totalPrice: service.price,
         customerNotes: "",
-      });
+      }).unwrap();
+
+      Alert.alert("Success", "Your booking has been created!");
+      router.replace("/(app)");
 
       Alert.alert("Success", "Your booking has been created!");
       router.replace("/(app)");

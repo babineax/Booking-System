@@ -1,5 +1,5 @@
-import { StyleSheet, View } from 'react-native';
-import AuthDebugComponent from '../components/AuthDebugComponent';
+import { StyleSheet, View } from "react-native";
+import { AuthDebugComponent } from "../../components/AuthDebugComponent";
 
 export default function AuthDebugScreen() {
   return (

@@ -7,20 +7,14 @@
     "doc": "docs"
   },
   "scripts": {
-    "server": "cd backend && npx nodemon server.js",
-    "client": "cd frontend && npm start",
-    "dev": "concurrently \"npm run client\" \"npm run server\""
+    "client": "cd frontend && npm start"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
-  "devDependencies": {
-    "concurrently": "^9.2.0",
-    "dotenv": "^17.2.1",
-    "nodemon": "^3.1.10"
-  },
   "dependencies": {
     "firebase": "^12.1.0"
   }
 }
+

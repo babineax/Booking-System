@@ -1,65 +1,79 @@
-import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+// Use CommonJS imports
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
 
 admin.initializeApp();
-
 const db = admin.firestore();
 
-export const createBooking = functions.https.onCall(async (data, context) => {
-  // Check if the user is authenticated.
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'The function must be called while authenticated.'
-    );
-  }
+/** Types for request & response */
+interface BookingRequest {
+  serviceId: string;
+  startTime: string;
+}
 
-  const { serviceId, startTime } = data;
-  const userId = context.auth.uid;
+interface BookingResponse {
+  success: boolean;
+  message: string;
+}
 
-  // Validate input.
-  if (!serviceId || !startTime) {
-    throw new functions.https.HttpsError(
-      'invalid-argument',
-      'The function must be called with two arguments, "serviceId" and "startTime".'
-    );
-  }
-
-  const bookingRef = db.collection('bookings');
-
-  try {
-    await db.runTransaction(async (transaction) => {
-      const query = bookingRef
-        .where('serviceId', '==', serviceId)
-        .where('startTime', '==', startTime);
-
-      const snapshot = await transaction.get(query);
-
-      if (!snapshot.empty) {
-        throw new functions.https.HttpsError(
-          'already-exists',
-          'This time slot is no longer available.'
-        );
-      }
-
-      transaction.set(bookingRef.doc(), {
-        serviceId,
-        startTime,
-        userId,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        status: 'confirmed',
-      });
-    });
-
-    return { success: true, message: 'Booking created successfully.' };
-  } catch (error) {
-    console.error('Booking transaction failed: ', error);
-    if (error instanceof functions.https.HttpsError) {
-      throw error;
+exports.createBooking = functions.https.onCall<BookingRequest, BookingResponse>(
+  async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "The function must be called while authenticated."
+      );
     }
-    throw new functions.https.HttpsError(
-      'internal',
-      'An internal error occurred.'
-    );
+
+    const { serviceId, startTime } = data;
+    const userId = context.auth.uid;
+
+    if (!serviceId || !startTime) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        'Must provide "serviceId" and "startTime".'
+      );
+    }
+
+    const parsed = new Date(startTime);
+    if (isNaN(parsed.getTime())) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        '"startTime" must be a valid date.'
+      );
+    }
+
+    const slotId = `${encodeURIComponent(serviceId)}_${encodeURIComponent(
+      parsed.toISOString()
+    )}`;
+    const docRef = db.collection("bookings").doc(slotId);
+
+    try {
+      await db.runTransaction(async (tx: FirebaseFirestore.Transaction) => {
+        const snap = await tx.get(docRef);
+        if (snap.exists) {
+          throw new functions.https.HttpsError(
+            "already-exists",
+            "This time slot is no longer available."
+          );
+        }
+        tx.set(docRef, {
+          serviceId,
+          startTime: admin.firestore.Timestamp.fromDate(parsed),
+          userId,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          status: "confirmed",
+        });
+      });
+
+      return { success: true, message: "Booking created successfully." };
+    } catch (err: any) {
+      console.error("Booking transaction failed:", err);
+      if (err instanceof functions.https.HttpsError) throw err;
+      throw new functions.https.HttpsError(
+        "internal",
+        "An internal error occurred."
+      );
+    }
   }
-});
+);

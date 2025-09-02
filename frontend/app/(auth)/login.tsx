@@ -83,7 +83,7 @@ const LoginScreen = () => {
     <View style={styles.container}>
       {/* Logo */}
       <Image
-        source={require("../assets/images/logo.png")}
+        source={require("../../assets/images/logo.png")}
         style={styles.logo}
       />
 
@@ -149,13 +149,13 @@ const LoginScreen = () => {
       <View style={styles.socialContainer}>
         <TouchableOpacity>
           <Image
-            source={require("../assets/images/Google.png")}
+            source={require("../../assets/images/Google.png")}
             style={styles.socialIcon}
           />
         </TouchableOpacity>
         <TouchableOpacity>
           <Image
-            source={require("../assets/images/Facebook.png")}
+            source={require("../../assets/images/Facebook.png")}
             style={styles.socialIcon}
           />
         </TouchableOpacity>

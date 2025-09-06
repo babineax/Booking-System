@@ -1,23 +1,23 @@
-import { useEffect } from 'react';
-import { useFonts } from 'expo-font';
-import { SplashScreen, Stack, useRouter, useSegments } from 'expo-router';
-import Toast from 'react-native-toast-message';
-import { Provider } from 'react-redux';
-import { store } from '../src/redux/store';
-import { QueryProvider } from '../providers/QueryProvider';
-import { AuthProvider, useAuth } from '../firebase/providers/AuthProvider';
+import { useEffect } from "react";
+import { useFonts } from "expo-font";
+import { SplashScreen, Stack, useRouter, useSegments } from "expo-router";
+import Toast from "react-native-toast-message";
+import { Provider } from "react-redux";
+import { store } from "../src/redux/store";
+import { QueryProvider } from "../providers/QueryProvider";
+import { AuthProvider, useAuth } from "../firebase/providers/AuthProvider";
 
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
-} from 'expo-router';
+} from "expo-router";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    'SpaceMono-Regular': require('../assets/fonts/SpaceMono-Regular.ttf'),
+    "SpaceMono-Regular": require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
@@ -58,22 +58,22 @@ function RootLayoutNav() {
       return;
     }
 
-    const inAuthGroup = segments[0] === '(auth)';
+    const inAuthGroup = segments[0] === "(auth)";
 
     // If the user is not signed in and not in the auth group, redirect to login.
     if (!isAuthenticated && !inAuthGroup) {
-      router.replace('/(auth)/login');
-    } 
+      router.replace("/(auth)/login");
+    }
     // If the user is signed in and in the auth group, redirect to the main app.
     else if (isAuthenticated && inAuthGroup) {
-      router.replace('/(app)');
+      router.replace("/(app)");
     }
   }, [isAuthenticated, isLoading, segments]);
 
   // While loading, you can return a splash screen or a loading indicator
   if (isLoading) {
     // You might want to return a proper loading component here
-    return null; 
+    return null;
   }
 
   return (

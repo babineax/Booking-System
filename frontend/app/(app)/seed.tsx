@@ -73,7 +73,7 @@ export default function SeedingPage() {
       setResults({ users: userCount, services: serviceCount });
       Alert.alert(
         "✅ Success",
-        `Seeded ${userCount} users and ${serviceCount} services`
+        `Seeded ${userCount} users and ${serviceCount} services`,
       );
     } catch (err) {
       showError(err);

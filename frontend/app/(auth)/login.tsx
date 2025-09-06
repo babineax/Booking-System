@@ -53,7 +53,7 @@ const LoginScreen = () => {
           user: user,
           token: await firebaseUser.getIdToken(),
           isAdmin: user.isAdmin,
-        })
+        }),
       );
 
       console.log("Credentials set, navigating...");

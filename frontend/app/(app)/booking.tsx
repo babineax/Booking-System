@@ -5,7 +5,7 @@ import BookingStepper from "@/components/BookingStepper";
 import DatePicker from "@/components/DatePicker";
 import ServiceSelector from "@/components/ServiceSelector";
 import TimeSlotSelector from "@/components/TimeSlotSelector";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
@@ -24,17 +24,18 @@ type Service = {
 
 export default function BookingPage() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const clientId = params.clientId as string | undefined;
+
   const [step, setStep] = useState(0);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedServiceId, setSelectedServiceId] = useState("");
 
-  const {
-    data: services = [],
-    isLoading: servicesLoading,
-  } = useGetServices();
-  
-  const { mutate: createBooking, isPending: bookingLoading } = useCreateBooking();
+  const { data: services = [], isLoading: servicesLoading } = useGetServices();
+
+  const { mutate: createBooking, isPending: bookingLoading } =
+    useCreateBooking();
 
   const handleNext = () => setStep((prev) => prev + 1);
   const handleBack = () => setStep((prev) => prev - 1);
@@ -42,36 +43,45 @@ export default function BookingPage() {
 
   const handleConfirmBooking = () => {
     if (!selectedServiceId || !selectedDate || !selectedTime) {
-      Alert.alert("Error", "Please make sure you have selected a service, date, and time.");
+      Alert.alert(
+        "Error",
+        "Please make sure you have selected a service, date, and time.",
+      );
       return;
     }
 
-    // Combine date and time into a single ISO 8601 string for the backend
-    const startTimeISO = new Date(`${selectedDate}T${convertTo24Hour(selectedTime)}`).toISOString();
+    const startTimeISO = new Date(
+      `${selectedDate}T${convertTo24Hour(selectedTime)}`,
+    ).toISOString();
 
-    createBooking({
-      serviceId: selectedServiceId,
-      startTime: startTimeISO,
-    }, {
-      onSuccess: () => {
-        Toast.show({
-          type: "success",
-          text1: "Booking Confirmed!",
-          text2: "Your appointment has been scheduled.",
-        });
-        setTimeout(() => {
-          router.replace("/(app)");
-        }, 2000);
+    createBooking(
+      {
+        serviceId: selectedServiceId,
+        startTime: startTimeISO,
+        clientId: clientId, // Pass clientId if it exists
       },
-      onError: (error) => {
-        console.error(error);
-        Toast.show({
-          type: "error",
-          text1: "Booking Failed",
-          text2: error.message || "Please try again later.",
-        });
-      }
-    });
+      {
+        onSuccess: () => {
+          Toast.show({
+            type: "success",
+            text1: "Booking Confirmed!",
+            text2: "The appointment has been scheduled.",
+          });
+          setTimeout(() => {
+            // Redirect admin back to dashboard, customer to home
+            router.replace(clientId ? "/(app)/(admin)" : "/(app)");
+          }, 2000);
+        },
+        onError: (error) => {
+          console.error(error);
+          Toast.show({
+            type: "error",
+            text1: "Booking Failed",
+            text2: error.message || "Please try again later.",
+          });
+        },
+      },
+    );
   };
 
   const convertTo24Hour = (time12h: string) => {

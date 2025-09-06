@@ -5,6 +5,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 interface CreateBookingRequest {
   serviceId: string;
   startTime: string; // Should be in a consistent format, e.g., ISO 8601
+  clientId?: string; // Optional: for admins booking for a client
 }
 
 interface CreateBookingResponse {

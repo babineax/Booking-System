@@ -70,7 +70,7 @@ const RegisterScreen = () => {
           user: user,
           token: await firebaseUser.getIdToken(),
           isAdmin: user.isAdmin,
-        })
+        }),
       );
 
       Alert.alert("Success", "Registration successful!", [

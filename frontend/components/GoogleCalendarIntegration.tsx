@@ -1,87 +1,50 @@
-import { useEffect, useState } from 'react';
-import { Button, StyleSheet, Text, View } from 'react-native';
-import { useAuth } from '../firebase/providers/AuthProvider';
-import { googleCalendarService } from '../firebase/services';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import * as WebBrowser from 'expo-web-browser';
+import { Alert, Button, View, Text } from 'react-native';
+import { useState } from 'react';
 
-export const GoogleCalendarIntegration = () => {
-  const { firebaseUser } = useAuth();
-  const [isConnected, setIsConnected] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const functions = getFunctions();
+const getGoogleAuthUrlCallable = httpsCallable(functions, 'getGoogleAuthUrl');
 
-  useEffect(() => {
-    checkCalendarConnection();
-  }, [firebaseUser]);
+type GoogleCalendarIntegrationProps = {
+  isConected: boolean;
+};
 
-  const checkCalendarConnection = async () => {
-    if (!firebaseUser) return;
+const GoogleCalendarIntegration = ({ isConected }: GoogleCalendarIntegrationProps) => {
+  const [isLoading, setIsLoading] = useState(false);
 
+  const handleConnect = async () => {
+    setIsLoading(true);
     try {
-      const credentials = await googleCalendarService.getStoredCredentials(firebaseUser.uid);
-      setIsConnected(!!credentials);
-    } catch (err) {
-      console.error('Error checking calendar connection:', err);
-      setError('Failed to check calendar connection');
-    }
-  };
-
-  const handleConnectCalendar = async () => {
-    try {
-      setError(null);
-      await googleCalendarService.authorize();
-      setIsConnected(true);
-    } catch (err: any) {
-      console.error('Error connecting to Google Calendar:', err);
+      const { data } = await getGoogleAuthUrlCallable();
+      const { url } = data as { url: string };
       
-      
-      if (err.message === 'Google OAuth Client ID is not configured') {
-        setError('Google Calendar integration is not properly configured');
-      } else if (err.code === 'auth/popup-blocked') {
-        setError('Please allow popups for Google Calendar authentication');
-      } else if (err.code === 'auth/cancelled-popup-request') {
-        setError('Authentication was cancelled');
-      } else if (err.code === 'auth/popup-closed-by-user') {
-        setError('Authentication window was closed');
-      } else {
-        setError('Failed to connect to Google Calendar. Please try again.');
+      if (url) {
+        await WebBrowser.openAuthSessionAsync(url);
+        // After the browser flow is complete, you might want to refetch the user's
+        // connection status to update the UI.
       }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to start the connection process. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  if (!firebaseUser) {
-    return null;
-  }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Google Calendar Integration</Text>
-      
-      {error && (
-        <Text style={styles.error}>{error}</Text>
+    <View>
+      {isConected ? (
+        <Text>Google Calendar is connected.</Text>
+      ) : (
+        <Button
+          title={isLoading ? 'Connecting...' : 'Connect to Google Calendar'}
+          onPress={handleConnect}
+          disabled={isLoading}
+        />
       )}
-
-      <Button
-        title={isConnected ? "Connected to Google Calendar" : "Connect Google Calendar"}
-        onPress={handleConnectCalendar}
-        disabled={isConnected}
-      />
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    marginVertical: 8,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  error: {
-    color: 'red',
-    marginBottom: 16,
-  },
-});
+export default GoogleCalendarIntegration;

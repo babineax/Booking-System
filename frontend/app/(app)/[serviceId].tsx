@@ -132,7 +132,7 @@ export default function ServiceDetailScreen() {
       if (err.message?.includes("Time slot is already booked")) {
         Alert.alert(
           "Slot unavailable",
-          "Sorry, this time is already taken. Please choose another."
+          "Sorry, this time is already taken. Please choose another.",
         );
       } else {
         Alert.alert("Error", err.message || "Failed to create booking.");

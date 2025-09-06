@@ -15,7 +15,7 @@ export default function SplashScreen() {
     const checkAuthStatus = async () => {
       try {
         const userData = await AsyncStorage.getItem("userInfo");
-        
+
         if (userData && userInfo) {
           router.replace("/dashboard");
         } else {
@@ -39,14 +39,16 @@ export default function SplashScreen() {
 
   if (isLoading) {
     return (
-      <View style={{
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#fff'
-      }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#fff",
+        }}
+      >
         <ActivityIndicator size="large" color="#0066cc" />
-        <Text style={{ marginTop: 16, fontSize: 16, color: '#666' }}>
+        <Text style={{ marginTop: 16, fontSize: 16, color: "#666" }}>
           Loading...
         </Text>
       </View>

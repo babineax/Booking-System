@@ -1,8 +1,14 @@
-'use client';
-import { useRouter } from 'expo-router';
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useGetServices } from '../../features/services/hooks/useGetServices';
-
+"use client";
+import { useRouter } from "expo-router";
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useGetServices } from "../../features/services/hooks/useGetServices";
 
 type Service = {
   id?: string;
@@ -27,24 +33,26 @@ export default function ServiceListScreen() {
   }
 
   if (error) {
-    console.error('Service loading error:', error);
+    console.error("Service loading error:", error);
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>Error loading services</Text>
         <Text style={[styles.errorText, { fontSize: 14, marginTop: 8 }]}>
-          {error.message || 'Unknown error occurred'}
+          {error.message || "Unknown error occurred"}
         </Text>
       </View>
     );
   }
 
   const renderServiceCard = ({ item }: { item: Service }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.serviceCard}
-      onPress={() => router.push({
-        pathname: '/[serviceId]',
-        params: { serviceId: item.id || '' },
-      })}
+      onPress={() =>
+        router.push({
+          pathname: "/[serviceId]",
+          params: { serviceId: item.id || "" },
+        })
+      }
     >
       <Text style={styles.serviceName}>{item.name}</Text>
       {item.description && (
@@ -77,40 +85,40 @@ export default function ServiceListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
     padding: 20,
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 20,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   errorText: {
     fontSize: 16,
-    color: '#f44336',
+    color: "#f44336",
   },
   serviceCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -118,27 +126,27 @@ const styles = StyleSheet.create({
   },
   serviceName: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 8,
   },
   serviceDescription: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginBottom: 12,
   },
   serviceDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   serviceDuration: {
     fontSize: 14,
-    color: '#00BCD4',
-    fontWeight: '500',
+    color: "#00BCD4",
+    fontWeight: "500",
   },
   servicePrice: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2E7D32',
+    fontWeight: "bold",
+    color: "#2E7D32",
   },
 });

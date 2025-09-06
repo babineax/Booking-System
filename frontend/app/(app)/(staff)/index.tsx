@@ -39,18 +39,32 @@ const StaffDashboard = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header with Logout Button */}
+      {/* Header with Logout and Settings Buttons */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Staff Dashboard</Text>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <MaterialCommunityIcons
-            name="logout"
-            size={20}
-            color="#fff"
-            style={styles.logoutIcon}
-          />
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity
+            style={styles.settingsButton}
+            onPress={() => router.push("/(app)/(staff)/settings")}
+          >
+            <MaterialCommunityIcons
+              name="cog"
+              size={20}
+              color="#fff"
+              style={styles.settingsIcon}
+            />
+            <Text style={styles.settingsText}>Settings</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <MaterialCommunityIcons
+              name="logout"
+              size={20}
+              color="#fff"
+              style={styles.logoutIcon}
+            />
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Main Content */}
@@ -84,6 +98,27 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#333",
+  },
+  headerButtons: {
+    flexDirection: "row",
+  },
+  settingsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#337ab7",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+  settingsText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
+    marginLeft: 5,
+  },
+  settingsIcon: {
+    marginRight: 5,
   },
   logoutButton: {
     flexDirection: "row",

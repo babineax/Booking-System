@@ -68,6 +68,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => unsubscribe();
   }, [dispatch]);
 
+  const handleLogout = () => {
+    dispatch(logout());
+    auth.signOut().catch((error) => {
+      console.error("Error signing out:", error);
+    });
+  };
   const contextValue = {
     userInfo,
     firebaseUser,

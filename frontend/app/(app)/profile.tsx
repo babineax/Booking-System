@@ -22,11 +22,13 @@ const ProfileScreen = () => {
 
   const handleLogout = () => {
     logout();
+    router.replace("/login");
     // After logout, the root layout should redirect to the login screen.
   };
 
-  const isAdmin = user?.role === "admin";
-  const isStaff = user?.role === "staff";
+  const role = (user as any)?.role || ""; // temp safeguard
+  const isAdmin = role === "admin";
+  const isStaff = role === "staff";
 
   return (
     <ScrollView style={styles.container}>

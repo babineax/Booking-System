@@ -1,9 +1,8 @@
-import { User } from 'firebase/auth';
+import { User } from "firebase/auth";
 
 export interface UserInfo {
   uid: string;
   email: string;
-  
 }
 
 export interface AuthContextType {
@@ -12,4 +11,6 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   currentUser: User | null;
+  user?: any | null;
+  logout: () => void;
 }

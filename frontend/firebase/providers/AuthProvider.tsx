@@ -2,10 +2,10 @@ import { onAuthStateChanged } from "firebase/auth";
 import { ReactNode, createContext, useContext, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-    logout,
-    setCredentials,
-    setFirebaseUser,
-    setLoading,
+  logout,
+  setCredentials,
+  setFirebaseUser,
+  setLoading,
 } from "../../src/redux/features/auth/authSlice";
 import { RootState } from "../../src/redux/types";
 import { auth } from "../config/firebase_config";
@@ -18,6 +18,7 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   isLoading: false,
   currentUser: null,
+  logout: () => {},
 });
 
 export const useAuth = (): AuthContextType => {
@@ -35,7 +36,7 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const dispatch = useDispatch();
   const { userInfo, firebaseUser, isAuthenticated, isLoading } = useSelector(
-    (state: RootState) => state.auth
+    (state: RootState) => state.auth,
   );
 
   useEffect(() => {
@@ -73,6 +74,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     isAuthenticated,
     isLoading,
     currentUser: firebaseUser,
+    user: userInfo,
+    logout: handleLogout,
   };
 
   return (

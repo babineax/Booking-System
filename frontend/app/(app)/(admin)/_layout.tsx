@@ -1,27 +1,15 @@
-import { Tabs } from "expo-router";
-import { FontAwesome } from "@expo/vector-icons";
+import { Stack } from "expo-router";
 
-export default function AdminTabLayout() {
+export default function AdminLayout() {
   return (
-    <Tabs screenOptions={{ headerShown: false }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Clients",
-          tabBarIcon: ({ color, size }) => (
-            <FontAwesome name="users" size={size} color={color} />
-          ),
-        }}
+    <Stack>
+      <Stack.Screen name="index" options={{ title: "Clients" }} />
+      <Stack.Screen name="bookings" options={{ title: "Bookings" }} />
+      <Stack.Screen
+        name="create-booking"
+        options={{ title: "Create Booking" }}
       />
-      <Tabs.Screen
-        name="bookings"
-        options={{
-          title: "Bookings",
-          tabBarIcon: ({ color, size }) => (
-            <FontAwesome name="calendar" size={size} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+      <Stack.Screen name="dev-tools" options={{ title: "Developer Tools" }} />
+    </Stack>
   );
 }

@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../../../firebase/config";
 import { adminService } from "../../../firebase/services/adminService";
@@ -156,7 +157,7 @@ export default function AdminClientsScreen() {
       if (result.success) {
         Alert.alert(
           "Client Created Successfully",
-          `An email has been sent to ${newClient.email} with their temporary password: ${result.temporaryPassword}`,
+          `An email has been sent to ${newClient.email} with instructions to set up their password.`,
           [
             {
               text: "OK",
@@ -258,7 +259,14 @@ export default function AdminClientsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Clients ({clients.length})</Text>
+        <View style={styles.headerTop}>
+          <Text style={styles.headerTitle}>Clients ({clients.length})</Text>
+          <TouchableOpacity
+            onPress={() => router.push("/(app)/(admin)/dev-tools" as any)}
+          >
+            <MaterialCommunityIcons name="wrench" size={24} color="#1F2937" />
+          </TouchableOpacity>
+        </View>
 
         {/* Search Bar */}
         <TextInput
@@ -390,10 +398,15 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 30,
   },
+  headerTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
   headerTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 16,
     color: "#1F2937",
   },
   searchInput: {

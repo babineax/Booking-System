@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useGetServices } from "../../../features/services/hooks/useGetServices";
 import { useCreateBooking } from "../../../features/booking/hooks/useCreateBooking";
 import ServiceSelector from "../../../components/ServiceSelector";
+import StaffSelector from "../../../components/StaffSelector";
 import DatePicker from "../../../components/DatePicker";
 import TimeSlotSelector from "../../../components/TimeSlotSelector";
 import BookingConfirmation from "../../../components/BookingConfirmation";
@@ -17,6 +18,7 @@ export default function AdminCreateBookingScreen() {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedServiceId, setSelectedServiceId] = useState("");
+  const [selectedStaffId, setSelectedStaffId] = useState("");
 
   const { data: services = [], isLoading: servicesLoading } = useGetServices();
   const { mutate: createBooking, isPending: bookingLoading } =
@@ -26,8 +28,16 @@ export default function AdminCreateBookingScreen() {
   const handleBack = () => setStep((prev) => prev - 1);
 
   const handleConfirmBooking = () => {
-    if (!selectedServiceId || !selectedDate || !selectedTime) {
-      Alert.alert("Error", "Please select a service, date, and time.");
+    if (
+      !selectedServiceId ||
+      !selectedStaffId ||
+      !selectedDate ||
+      !selectedTime
+    ) {
+      Alert.alert(
+        "Error",
+        "Please select a service, provider, date, and time.",
+      );
       return;
     }
 
@@ -40,6 +50,7 @@ export default function AdminCreateBookingScreen() {
         serviceId: selectedServiceId,
         startTime: startTimeISO,
         clientId: clientId as string,
+        serviceProviderId: selectedStaffId,
       },
       {
         onSuccess: () => {
@@ -77,13 +88,22 @@ export default function AdminCreateBookingScreen() {
         );
       case 1:
         return (
+          <StaffSelector
+            staff={selectedStaffId}
+            setStaff={setSelectedStaffId}
+            onNext={handleNext}
+            onBack={handleBack}
+          />
+        );
+      case 2:
+        return (
           <DatePicker
             date={selectedDate}
             setDate={setSelectedDate}
             onNext={handleNext}
           />
         );
-      case 2:
+      case 3:
         return (
           <TimeSlotSelector
             date={selectedDate}
@@ -94,7 +114,7 @@ export default function AdminCreateBookingScreen() {
             onBack={handleBack}
           />
         );
-      case 3:
+      case 4:
         return (
           <BookingConfirmation
             service={selectedService}

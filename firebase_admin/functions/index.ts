@@ -1,8 +1,7 @@
-// Use CommonJS imports
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
-const { google } = require("googleapis");
-const twilio = require("twilio");
+import * as functions from "firebase-functions";
+import * as admin from "firebase-admin";
+import { google } from "googleapis";
+import * as twilio from "twilio";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -10,7 +9,7 @@ const db = admin.firestore();
 // Initialize Twilio
 const twilioClient = twilio(
   functions.config().twilio.account_sid,
-  functions.config().twilio.auth_token
+  functions.config().twilio.auth_token,
 );
 const twilioPhoneNumber = functions.config().twilio.phone_number;
 
@@ -18,49 +17,56 @@ const twilioPhoneNumber = functions.config().twilio.phone_number;
 const oauth2Client = new google.auth.OAuth2(
   functions.config().google.client_id,
   functions.config().google.client_secret,
-  functions.config().google.redirect_uri
+  functions.config().google.redirect_uri,
 );
 
 /** Types for request & response */
-interface BookingRequest {
+interface BookingData {
   serviceId: string;
   startTime: string;
+  clientId?: string;
+  serviceProviderId: string;
 }
 
-interface BookingResponse {
-  success: boolean;
-  message: string;
+interface ClientData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
 }
 
-exports.createBooking = functions.https.onCall<BookingRequest, BookingResponse>(
-  async (data, context) => {
+export const createBooking = functions.https.onCall(
+  async (data: BookingData, context) => {
     if (!context.auth) {
       throw new functions.https.HttpsError(
         "unauthenticated",
-        "The function must be called while authenticated."
+        "The function must be called while authenticated.",
       );
     }
 
-    const { serviceId, startTime, clientId } = data;
+    const { serviceId, startTime, clientId, serviceProviderId } = data;
     let userId = context.auth.uid;
 
     // If a clientId is provided, verify the caller is an admin
     if (clientId) {
-      const adminUserDoc = await db.collection("users").doc(context.auth.uid).get();
+      const adminUserDoc = await db
+        .collection("users")
+        .doc(context.auth.uid)
+        .get();
       const adminUserData = adminUserDoc.data();
       if (adminUserData?.role !== "admin") {
         throw new functions.https.HttpsError(
           "permission-denied",
-          "Only admins can create bookings for other clients."
+          "Only admins can create bookings for other clients.",
         );
       }
       userId = clientId; // Set the userId to the client being booked for
     }
 
-    if (!serviceId || !startTime) {
+    if (!serviceId || !startTime || !serviceProviderId) {
       throw new functions.https.HttpsError(
         "invalid-argument",
-        'Must provide "serviceId" and "startTime".'
+        'Must provide "serviceId", "startTime", and "serviceProviderId".',
       );
     }
 
@@ -68,12 +74,12 @@ exports.createBooking = functions.https.onCall<BookingRequest, BookingResponse>(
     if (isNaN(parsedStartTime.getTime())) {
       throw new functions.https.HttpsError(
         "invalid-argument",
-        '"startTime" must be a valid date.'
+        '"startTime" must be a valid date.',
       );
     }
 
     const slotId = `${encodeURIComponent(serviceId)}_${encodeURIComponent(
-      parsedStartTime.toISOString()
+      parsedStartTime.toISOString(),
     )}`;
     const docRef = db.collection("bookings").doc(slotId);
 
@@ -83,13 +89,14 @@ exports.createBooking = functions.https.onCall<BookingRequest, BookingResponse>(
         if (snap.exists) {
           throw new functions.https.HttpsError(
             "already-exists",
-            "This time slot is no longer available."
+            "This time slot is no longer available.",
           );
         }
         tx.set(docRef, {
           serviceId,
           startTime: admin.firestore.Timestamp.fromDate(parsedStartTime),
           userId,
+          serviceProviderId,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           status: "confirmed",
         });
@@ -120,8 +127,10 @@ exports.createBooking = functions.https.onCall<BookingRequest, BookingResponse>(
           }
 
           // Google Calendar Integration
-          const serviceProviderId = serviceData.staffMembers[0]; // Assuming the first staff member is the provider
-          const providerDoc = await db.collection("users").doc(serviceProviderId).get();
+          const providerDoc = await db
+            .collection("users")
+            .doc(serviceProviderId)
+            .get();
           if (providerDoc.exists) {
             const providerData = providerDoc.data();
             if (providerData.googleRefreshToken) {
@@ -129,9 +138,14 @@ exports.createBooking = functions.https.onCall<BookingRequest, BookingResponse>(
                 refresh_token: providerData.googleRefreshToken,
               });
 
-              const calendar = google.calendar({ version: "v3", auth: oauth2Client });
-              
-              const endTime = new Date(parsedStartTime.getTime() + serviceData.duration * 60000);
+              const calendar = google.calendar({
+                version: "v3",
+                auth: oauth2Client,
+              });
+
+              const endTime = new Date(
+                parsedStartTime.getTime() + serviceData.duration * 60000,
+              );
 
               await calendar.events.insert({
                 calendarId: "primary",
@@ -153,7 +167,10 @@ exports.createBooking = functions.https.onCall<BookingRequest, BookingResponse>(
         }
       } catch (notificationError) {
         // Log the error, but don't fail the booking
-        console.error("Failed to send notifications or create calendar event:", notificationError);
+        console.error(
+          "Failed to send notifications or create calendar event:",
+          notificationError,
+        );
       }
       // --- End of new integration logic ---
 
@@ -163,33 +180,35 @@ exports.createBooking = functions.https.onCall<BookingRequest, BookingResponse>(
       if (err instanceof functions.https.HttpsError) throw err;
       throw new functions.https.HttpsError(
         "internal",
-        "An internal error occurred."
+        "An internal error occurred.",
       );
     }
-  }
+  },
 );
 
-exports.getGoogleAuthUrl = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      "unauthenticated",
-      "The function must be called while authenticated."
-    );
-  }
+export const getGoogleAuthUrl = functions.https.onCall(
+  async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "The function must be called while authenticated.",
+      );
+    }
 
-  const scopes = ["https://www.googleapis.com/auth/calendar.events"];
+    const scopes = ["https://www.googleapis.com/auth/calendar.events"];
 
-  const url = oauth2Client.generateAuthUrl({
-    access_type: "offline",
-    scope: scopes,
-    // Pass the user's UID in the state parameter to identify them in the callback
-    state: context.auth.uid,
-  });
+    const url = oauth2Client.generateAuthUrl({
+      access_type: "offline",
+      scope: scopes,
+      // Pass the user's UID in the state parameter to identify them in the callback
+      state: context.auth.uid,
+    });
 
-  return { url };
-});
+    return { url };
+  },
+);
 
-exports.oauthcallback = functions.https.onRequest(async (req, res) => {
+export const oauthcallback = functions.https.onRequest(async (req, res) => {
   const { code, state } = req.query;
   const userId = state as string;
 
@@ -212,78 +231,82 @@ exports.oauthcallback = functions.https.onRequest(async (req, res) => {
   }
 });
 
-exports.createClient = functions.https.onCall(async (data, context) => {
-  // 1. Authentication & Authorization
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      "unauthenticated",
-      "The function must be called while authenticated."
-    );
-  }
-
-  const adminUserDoc = await db.collection("users").doc(context.auth.uid).get();
-  const adminUserData = adminUserDoc.data();
-
-  if (adminUserData?.role !== "admin") {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Only admins can create new clients."
-    );
-  }
-
-  // 2. Data Validation
-  const { email, firstName, lastName, phone } = data;
-  if (!email || !firstName || !lastName || !phone) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Missing required client information."
-    );
-  }
-
-  // 3. Logic
-  try {
-    // Generate a random password
-    const randomPassword = Math.random().toString(36).slice(-8);
-
-    // Create user in Firebase Auth
-    const userRecord = await admin.auth().createUser({
-      email,
-      password: randomPassword,
-      displayName: `${firstName} ${lastName}`,
-      phoneNumber: phone,
-    });
-
-    // Create user document in Firestore
-    await db.collection("users").doc(userRecord.uid).set({
-      firstName,
-      lastName,
-      email,
-      phone,
-      role: "customer", // Default role for clients
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    // 4. Response
-    // For production, you might want to send this password to the user
-    // via a secure method (e.g., email) instead of returning it directly.
-    return {
-      success: true,
-      message: "Client created successfully.",
-      clientId: userRecord.uid,
-      temporaryPassword: randomPassword,
-    };
-  } catch (error: any) {
-    console.error("Error creating client:", error);
-    // Check for specific auth errors
-    if (error.code === "auth/email-already-exists") {
+export const createClient = functions.https.onCall(
+  async (data: ClientData, context) => {
+    // 1. Authentication & Authorization
+    if (!context.auth) {
       throw new functions.https.HttpsError(
-        "already-exists",
-        "A user with this email already exists."
+        "unauthenticated",
+        "The function must be called while authenticated.",
       );
     }
-    throw new functions.https.HttpsError(
-      "internal",
-      "An unexpected error occurred while creating the client."
-    );
-  }
-});
+
+    const adminUserDoc = await db
+      .collection("users")
+      .doc(context.auth.uid)
+      .get();
+    const adminUserData = adminUserDoc.data();
+
+    if (adminUserData?.role !== "admin") {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Only admins can create new clients.",
+      );
+    }
+
+    // 2. Data Validation
+    const { email, firstName, lastName, phone } = data;
+    if (!email || !firstName || !lastName || !phone) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Missing required client information.",
+      );
+    }
+
+    // 3. Logic
+    try {
+      // Create user in Firebase Auth
+      const userRecord = await admin.auth().createUser({
+        email,
+        displayName: `${firstName} ${lastName}`,
+        phoneNumber: phone,
+      });
+
+      // Create user document in Firestore
+      await db.collection("users").doc(userRecord.uid).set({
+        firstName,
+        lastName,
+        email,
+        phone,
+        role: "customer", // Default role for clients
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      // Send password reset email
+      const link = await admin.auth().generatePasswordResetLink(email);
+      // You can use a more sophisticated email sending service here
+      console.log(`Password reset link for ${email}: ${link}`);
+
+      // 4. Response
+      return {
+        success: true,
+        message:
+          "Client created successfully. A password reset email has been sent.",
+        clientId: userRecord.uid,
+      };
+    } catch (error: any) {
+      console.error("Error creating client:", error);
+      // Check for specific auth errors
+      if (error.code === "auth/email-already-exists") {
+        throw new functions.https.HttpsError(
+          "already-exists",
+          "A user with this email already exists.",
+        );
+      }
+      throw new functions.https.HttpsError(
+        "internal",
+        "An unexpected error occurred while creating the client.",
+      );
+    }
+  },
+);

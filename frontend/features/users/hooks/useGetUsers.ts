@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "../../firebase/config";
+import { db } from "../../../firebase/config/firebase_config";
 
 async function getUsers({ role }) {
   const usersRef = collection(db, "users");

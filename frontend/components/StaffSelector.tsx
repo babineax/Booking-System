@@ -1,13 +1,7 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { useGetUsers } from "../../../features/users/hooks/useGetUsers"; // Assuming you have a hook to get users
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useGetUsers } from "../features/users/hooks/useGetUsers"; // Assuming you have a hook to get users
 
-export default function StaffSelector({
-  staff,
-  setStaff,
-  onNext,
-  onBack,
-}) {
+export default function StaffSelector({ staff, setStaff, onNext, onBack }) {
   const { data: users = [], isLoading } = useGetUsers({ role: "staff" });
 
   return (
@@ -22,7 +16,9 @@ export default function StaffSelector({
             style={[styles.item, staff === user.id && styles.selected]}
             onPress={() => setStaff(user.id)}
           >
-            <Text>{user.firstName} {user.lastName}</Text>
+            <Text>
+              {user.firstName} {user.lastName}
+            </Text>
           </TouchableOpacity>
         ))
       )}

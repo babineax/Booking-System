@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { useAuth } from "../../firebase/providers/AuthProvider";
+import { useAuth } from "../../../firebase/providers/AuthProvider";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 // Placeholder for a bookings list component

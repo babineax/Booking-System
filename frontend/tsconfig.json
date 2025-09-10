@@ -22,7 +22,7 @@
     "nativewind-env.d.ts",
     "types/**/*.d.ts",
     "src/redux/features/auth/authThunk.js"
-  ],
+, "src/redux/features/auth/authSlice.js", "src/redux/store.js"  ],
   "exclude": [
     "node_modules",
     "../firebase_admin",

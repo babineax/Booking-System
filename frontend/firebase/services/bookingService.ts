@@ -450,74 +450,34 @@ class BookingService {
     }
   }
 
+import { getFunctions, httpsCallable } from "firebase/functions";
+
+// ... (keep existing imports)
+
+class BookingService {
+  private bookingsCollection = "bookings";
+  private functions = getFunctions();
+
+  // ... (keep other methods like createBooking, getBookingById, etc.)
+
   async getAvailableTimeSlots(
     staffMemberId: string,
     serviceId: string,
     date: Date
   ): Promise<string[]> {
     try {
-      const allSlots = this.generateTimeSlots("09:00", "17:00", 30); // 30-minute slots
-
-      const existingBookings = await this.getBookingsByDate(date);
-      const staffBookings = existingBookings.filter(
-        (booking) =>
-          booking.staffMemberId === staffMemberId &&
-          ["pending", "confirmed", "in-progress"].includes(booking.status)
-      );
-
-      return allSlots.filter((slot) => {
-        const [hours, minutes] = slot.split(":").map(Number);
-        const slotEndTime = this.addMinutesToTime(slot, 30);
-
-        return !staffBookings.some((booking) =>
-          this.timesOverlap(
-            slot,
-            slotEndTime,
-            booking.startTime,
-            booking.endTime
-          )
-        );
+      const getAvailableSlotsCallable = httpsCallable(this.functions, 'getAvailableSlots');
+      const result = await getAvailableSlotsCallable({
+        staffId: staffMemberId,
+        serviceId: serviceId,
+        date: date.toISOString().split('T')[0], // Format as YYYY-MM-DD
       });
+      return (result.data as any).slots;
     } catch (error: any) {
+      console.error("Error calling getAvailableSlots function:", error);
       throw new Error(error.message || "Failed to get available time slots");
     }
-  }
-
-  private timesOverlap(
-    start1: string,
-    end1: string,
-    start2: string,
-    end2: string
-  ): boolean {
-    return start1 < end2 && start2 < end1;
-  }
-
-  private generateTimeSlots(
-    startTime: string,
-    endTime: string,
-    intervalMinutes: number
-  ): string[] {
-    const slots: string[] = [];
-    let current = startTime;
-
-    while (current < endTime) {
-      slots.push(current);
-      current = this.addMinutesToTime(current, intervalMinutes);
     }
-
-    return slots;
-  }
-
-  private addMinutesToTime(time: string, minutes: number): string {
-    const [hours, mins] = time.split(":").map(Number);
-    const date = new Date();
-    date.setHours(hours, mins + minutes);
-
-    return date.toLocaleTimeString("en-US", {
-      hour12: false,
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   }
 }
 

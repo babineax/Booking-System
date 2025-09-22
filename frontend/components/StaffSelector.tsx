@@ -1,16 +1,20 @@
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useGetUsers } from "../features/users/hooks/useGetUsers"; // Assuming you have a hook to get users
+import { StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from "react-native";
+import { useGetStaff } from "../features/users/hooks/useGetStaff";
 
-export default function StaffSelector({ staff, setStaff, onNext, onBack }) {
-  const { data: users = [], isLoading } = useGetUsers({ role: "staff" });
+export default function StaffSelector({ serviceId, staff, setStaff, onNext, onBack }) {
+  const { data: allStaff = [], isLoading } = useGetStaff();
+
+  const qualifiedStaff = allStaff.filter(member => 
+    member.serviceIds?.includes(serviceId)
+  );
 
   return (
     <View>
       <Text style={styles.label}>Select Service Provider</Text>
       {isLoading ? (
-        <Text>Loading staff...</Text>
-      ) : (
-        users.map((user) => (
+        <ActivityIndicator size="large" color="#3182ce" />
+      ) : qualifiedStaff.length > 0 ? (
+        qualifiedStaff.map((user) => (
           <TouchableOpacity
             key={user.id}
             style={[styles.item, staff === user.id && styles.selected]}
@@ -21,6 +25,8 @@ export default function StaffSelector({ staff, setStaff, onNext, onBack }) {
             </Text>
           </TouchableOpacity>
         ))
+      ) : (
+        <Text style={styles.noStaffText}>No staff members are available for this service.</Text>
       )}
       <View style={styles.buttons}>
         <TouchableOpacity style={styles.button} onPress={onBack}>
@@ -68,4 +74,10 @@ const styles = StyleSheet.create({
   disabled: {
     backgroundColor: "#ccc",
   },
+  noStaffText: {
+    textAlign: 'center',
+    marginVertical: 20,
+    fontSize: 16,
+    color: '#718096',
+  }
 });

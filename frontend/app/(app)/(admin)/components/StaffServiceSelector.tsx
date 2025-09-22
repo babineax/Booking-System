@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useGetServices } from '../../../features/services/hooks/useGetServices';
+import { useGetServices } from '../../../../features/services/hooks/useGetServices';
 
 interface ServiceSelectorProps {
   selectedServiceIds: string[];

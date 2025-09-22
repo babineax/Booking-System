@@ -30,30 +30,11 @@ interface Client {
   bookingCount?: number;
 }
 
-interface NewClientForm {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-}
-
-const INITIAL_CLIENT_FORM: NewClientForm = {
-  firstName: "",
-  lastName: "",
-  email: "",
-  phone: "",
-};
-
 export default function AdminClientsScreen() {
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
-  const [modalVisible, setModalVisible] = useState(false);
-  const [newClient, setNewClient] =
-    useState<NewClientForm>(INITIAL_CLIENT_FORM);
 
   const router = useRouter();
 
@@ -69,30 +50,6 @@ export default function AdminClientsScreen() {
         client.email?.toLowerCase().includes(query),
     );
   }, [clients, searchQuery]);
-
-  // Validate email format
-  const isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  // Validate phone format (basic validation)
-  const isValidPhone = (phone: string): boolean => {
-    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-    return phoneRegex.test(phone.replace(/\s/g, ""));
-  };
-
-  // Validate form
-  const validateForm = (): string | null => {
-    if (!newClient.firstName.trim()) return "First name is required";
-    if (!newClient.lastName.trim()) return "Last name is required";
-    if (!newClient.email.trim()) return "Email is required";
-    if (!isValidEmail(newClient.email)) return "Please enter a valid email";
-    if (!newClient.phone.trim()) return "Phone number is required";
-    if (!isValidPhone(newClient.phone))
-      return "Please enter a valid phone number";
-    return null;
-  };
 
   // Fetch clients from Firestore in real-time
   useEffect(() => {
@@ -140,48 +97,6 @@ export default function AdminClientsScreen() {
     // The onSnapshot listener will automatically update the data
   }, []);
 
-  const resetForm = useCallback(() => {
-    setNewClient(INITIAL_CLIENT_FORM);
-  }, []);
-
-  const handleAddClient = async () => {
-    const validationError = validateForm();
-    if (validationError) {
-      Alert.alert("Validation Error", validationError);
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const result = await adminService.createClient(newClient);
-      if (result.success) {
-        Alert.alert(
-          "Client Created Successfully",
-          `An email has been sent to ${newClient.email} with instructions to set up their password.`,
-          [
-            {
-              text: "OK",
-              onPress: () => {
-                resetForm();
-                setModalVisible(false);
-              },
-            },
-          ],
-        );
-      } else {
-        Alert.alert("Error", result.message || "Failed to create client");
-      }
-    } catch (error: any) {
-      console.error("Error creating client:", error);
-      Alert.alert(
-        "Creation Failed",
-        error.message || "An unexpected error occurred. Please try again.",
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleBookClient = useCallback(
     (client: Client) => {
       router.push({
@@ -195,11 +110,6 @@ export default function AdminClientsScreen() {
     },
     [router],
   );
-
-  const closeModal = useCallback(() => {
-    setModalVisible(false);
-    resetForm();
-  }, [resetForm]);
 
   const renderClientItem = useCallback(
     ({ item }: { item: Client }) => (
@@ -262,6 +172,12 @@ export default function AdminClientsScreen() {
         <View style={styles.headerTop}>
           <Text style={styles.headerTitle}>Clients ({clients.length})</Text>
           <TouchableOpacity
+            onPress={() => router.push("/(app)/(admin)/staff" as any)}
+            style={{ marginRight: 16 }}
+          >
+            <MaterialCommunityIcons name="account-group" size={24} color="#1F2937" />
+          </TouchableOpacity>
+          <TouchableOpacity
             onPress={() => router.push("/(app)/(admin)/dev-tools" as any)}
           >
             <MaterialCommunityIcons name="wrench" size={24} color="#1F2937" />
@@ -298,93 +214,11 @@ export default function AdminClientsScreen() {
 
       <TouchableOpacity
         style={styles.addButton}
-        onPress={() => setModalVisible(true)}
+        onPress={() => router.push("/(app)/(admin)/create-booking" as any)}
         activeOpacity={0.8}
       >
-        <Text style={styles.addButtonText}>+ Add Client</Text>
+        <Text style={styles.addButtonText}>Create New Booking</Text>
       </TouchableOpacity>
-
-      {/* Add Client Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={closeModal}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add New Client</Text>
-
-            <TextInput
-              placeholder="First Name"
-              style={styles.input}
-              value={newClient.firstName}
-              onChangeText={(text) =>
-                setNewClient((prev) => ({ ...prev, firstName: text.trim() }))
-              }
-              autoCapitalize="words"
-              returnKeyType="next"
-            />
-
-            <TextInput
-              placeholder="Last Name"
-              style={styles.input}
-              value={newClient.lastName}
-              onChangeText={(text) =>
-                setNewClient((prev) => ({ ...prev, lastName: text.trim() }))
-              }
-              autoCapitalize="words"
-              returnKeyType="next"
-            />
-
-            <TextInput
-              placeholder="Email"
-              style={styles.input}
-              value={newClient.email}
-              onChangeText={(text) =>
-                setNewClient((prev) => ({
-                  ...prev,
-                  email: text.trim().toLowerCase(),
-                }))
-              }
-              keyboardType="email-address"
-              autoCapitalize="none"
-              returnKeyType="next"
-            />
-
-            <TextInput
-              placeholder="Phone (+1234567890)"
-              style={styles.input}
-              value={newClient.phone}
-              onChangeText={(text) =>
-                setNewClient((prev) => ({ ...prev, phone: text.trim() }))
-              }
-              keyboardType="phone-pad"
-              returnKeyType="done"
-            />
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.cancelBtn]}
-                onPress={closeModal}
-                disabled={isSubmitting}
-              >
-                <Text style={styles.modalBtnText}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalBtn, isSubmitting && styles.disabledBtn]}
-                onPress={handleAddClient}
-                disabled={isSubmitting}
-              >
-                <Text style={styles.modalBtnText}>
-                  {isSubmitting ? "Creating..." : "Create Client"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }

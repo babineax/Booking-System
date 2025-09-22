@@ -35,10 +35,5 @@ service cloud.firestore {
          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
     }
-    
-    // Temporary rule for development/seeding - REMOVE IN PRODUCTION
-    match /{document=**} {
-      allow read, write: if request.auth != null;
-    }
   }
 }

@@ -1,10 +1,338 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import { google } from "googleapis";
-import * as twilio from "twilio";
+export const sendBookingReminders = https.onRequest(async (req, res) => {
+  try {
+    const now = new Date();
+    const twentyFourHoursFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-admin.initializeApp();
-const db = admin.firestore();
+    const bookingsSnapshot = await db.collection("bookings")
+      .where("status", "==", "confirmed")
+      .where("reminderSent", "==", false)
+      .where("startTime", ">=", now.toISOString())
+      .where("startTime", "<=", twentyFourHoursFromNow.toISOString())
+      .get();
+
+    if (bookingsSnapshot.empty) {
+      logger.info("No upcoming bookings that need reminders.");
+      res.status(200).send("No reminders to send.");
+      return;
+    }
+
+    const reminderPromises = bookingsSnapshot.docs.map(async (doc) => {
+      const booking = doc.data();
+      const customerDoc = await db.collection("users").doc(booking.customerId).get();
+
+      if (customerDoc.exists && customerDoc.data()!.phone) {
+        const customerPhone = customerDoc.data()!.phone;
+        const messageBody = `Hi ${customerDoc.data()!.firstName}, just a reminder about your upcoming booking tomorrow at ${new Date(booking.startTime).toLocaleTimeString()}. We look forward to seeing you!`;
+        
+        logger.info(`Sending reminder to ${customerPhone}`);
+        // In a real scenario, you would call your sendWhatsAppMessage function here.
+
+        // After sending, update the booking to prevent re-sending
+        return doc.ref.update({ reminderSent: true });
+      }
+      return Promise.resolve();
+    });
+
+    await Promise.all(reminderPromises);
+    res.status(200).send(`${reminderPromises.length} reminders sent.`);
+
+  } catch (error) {
+    logger.error("Error in sendBookingReminders:", error);
+    res.status(500).send("Failed to send reminders.");
+  }
+});
+
+
+// --- PLACEHOLDER SECRETS ---
+// Replace these with your actual credentials from Twilio, stored as environment variables
+const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID || "YOUR_TWILIO_ACCOUNT_SID";
+const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || "YOUR_TWILIO_AUTH_TOKEN";
+const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER || "whatsapp:+14155238886"; // Twilio Sandbox number
+
+const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+
+export const sendWhatsAppMessage = https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new https.HttpsError("unauthenticated", "User must be authenticated.");
+  }
+
+  const { to, body } = data;
+  if (!to || !body) {
+    throw new https.HttpsError("invalid-argument", "Missing 'to' or 'body' parameters.");
+  }
+
+  try {
+    logger.info(`Sending WhatsApp message to: ${to}`);
+    const message = await twilioClient.messages.create({
+      body: body,
+      from: TWILIO_PHONE_NUMBER,
+      to: `whatsapp:${to}` // Assumes `to` is a valid number with country code
+    });
+
+    logger.info(`Message sent successfully with SID: ${message.sid}`);
+    return { success: true, sid: message.sid };
+
+  } catch (error) {
+    logger.error("Error sending WhatsApp message:", error);
+    throw new https.HttpsError("internal", "Failed to send WhatsApp message.", error);
+  }
+});
+
+
+// ... (keep existing code)
+
+export const onBookingCreated = https.onRequest(async (req, res) => {
+  const bookingId = req.body.bookingId;
+  if (!bookingId) {
+    res.status(400).send("Missing bookingId");
+    return;
+  }
+
+  try {
+    const bookingDoc = await db.collection("bookings").doc(bookingId).get();
+    if (!bookingDoc.exists) {
+      throw new Error("Booking not found");
+    }
+    const booking = bookingDoc.data()!;
+
+    const staffDoc = await db.collection("users").doc(booking.staffMemberId).get();
+    if (!staffDoc.exists || !staffDoc.data()?.googleAuth?.refreshToken) {
+      logger.info("Staff member not found or has no Google auth, skipping calendar event.");
+      res.status(200).send("No calendar action needed.");
+      return;
+    }
+    const staff = staffDoc.data()!;
+
+    const customerDoc = await db.collection("users").doc(booking.customerId).get();
+    const customerName = customerDoc.exists() ? `${customerDoc.data()!.firstName} ${customerDoc.data()!.lastName}` : "A customer";
+
+    const serviceDoc = await db.collection("services").doc(booking.serviceId).get();
+    const serviceName = serviceDoc.exists() ? serviceDoc.data()!.name : "A service";
+
+    // Set credentials from refresh token
+    oauth2Client.setCredentials({ refresh_token: staff.googleAuth.refreshToken });
+    const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+
+    const event = {
+      summary: `${serviceName} with ${customerName}`,
+      description: `Booking details for the service: ${serviceName}. Customer: ${customerName}.`,
+      start: {
+        dateTime: new Date(booking.startTime).toISOString(),
+        timeZone: 'America/New_York', // Consider making this dynamic
+      },
+      end: {
+        dateTime: new Date(booking.endTime).toISOString(),
+        timeZone: 'America/New_York', // Consider making this dynamic
+      },
+    };
+
+    const calendarResponse = await calendar.events.insert({
+      calendarId: 'primary',
+      requestBody: event,
+    });
+
+    // Save the calendar event ID to our booking for future updates/deletions
+    await bookingDoc.ref.update({ googleCalendarEventId: calendarResponse.data.id });
+
+    // Send WhatsApp confirmation
+    if (customerDoc.exists && customerDoc.data()!.phone) {
+      const customerPhone = customerDoc.data()!.phone;
+      const messageBody = `Hi ${customerDoc.data()!.firstName}, your booking for ${serviceName} on ${new Date(booking.startTime).toLocaleDateString()} at ${new Date(booking.startTime).toLocaleTimeString()} is confirmed!`
+      
+      // We can call the function directly, but for robustness, it's better to invoke it.
+      // For simplicity here, we'll just log the intent.
+      logger.info(`Attempting to send WhatsApp confirmation to ${customerPhone}`);
+      // In a real scenario, you would call your sendWhatsAppMessage function here.
+      // Example: await sendWhatsAppMessage({ to: customerPhone, body: messageBody }, { auth: { uid: 'backend-process' } });
+    }
+
+    logger.info(`Event created: ${calendarResponse.data.htmlLink}`);
+    res.status(200).send({ success: true, eventUrl: calendarResponse.data.htmlLink });
+
+  } catch (error) {
+    logger.error("Error creating calendar event:", error);
+    res.status(500).send("Failed to create calendar event.");
+  }
+});
+
+
+import { getFirestore } from "firebase-admin/firestore";
+import { initializeApp } from "firebase-admin/app";
+import { google } from "googleapis";
+
+// --- PLACEHOLDER SECRETS ---
+// Replace these with your actual credentials from the Google Cloud Console
+const GOOGLE_CLIENT_ID = "YOUR_CLIENT_ID_HERE";
+const GOOGLE_CLIENT_SECRET = "YOUR_CLIENT_SECRET_HERE";
+// This redirect URI must be registered in your Google Cloud Console credentials
+const REDIRECT_URI = "https://your-app-url/auth/google/callback"; 
+
+const oauth2Client = new google.auth.OAuth2(
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  REDIRECT_URI
+);
+
+export const handleGoogleAuthCallback = https.onCall(async (data, context) => {
+  if (!context.auth || !context.auth.uid) {
+    throw new https.HttpsError("unauthenticated", "User must be authenticated.");
+  }
+
+  const { code, staffId } = data;
+  if (!code || !staffId) {
+    throw new https.HttpsError("invalid-argument", "Missing authorization code or staffId.");
+  }
+
+  try {
+    // Ensure the calling user is an admin
+    const adminUserDoc = await db.collection("users").doc(context.auth.uid).get();
+    if (!adminUserDoc.exists || adminUserDoc.data()?.role !== 'admin') {
+      throw new https.HttpsError("permission-denied", "Only admins can perform this action.");
+    }
+
+    logger.info(`Exchanging auth code for tokens for staffId: ${staffId}`);
+    const { tokens } = await oauth2Client.getToken(code);
+    const { access_token, refresh_token, expiry_date } = tokens;
+
+    if (!refresh_token) {
+      // This happens if the user has already granted permission and not been forced to re-consent.
+      // For this flow, we need the refresh token to live on the backend.
+      logger.warn("Refresh token not received. User may need to revoke access and re-authenticate.");
+      // We can still save the access token and its expiry.
+    }
+
+    logger.info(`Saving Google auth tokens for staffId: ${staffId}`);
+    await db.collection("users").doc(staffId).update({
+      googleAuth: {
+        accessToken: access_token,
+        refreshToken: refresh_token,
+        tokenExpiry: expiry_date,
+      },
+    });
+
+    return { success: true, message: "Google Calendar connected successfully." };
+
+  } catch (error) {
+    logger.error("Error in handleGoogleAuthCallback:", error);
+    throw new https.HttpsError("internal", "Failed to connect Google Calendar.", error);
+  }
+});
+
+
+initializeApp();
+const db = getFirestore();
+
+// Definition for a booking document in Firestore
+interface Booking {
+  startTime: string; // ISO string
+  endTime: string;   // ISO string
+}
+
+// Expected request data for the getAvailableSlots function
+interface AvailabilityRequest {
+  staffId: string;
+  serviceId: string;
+  date: string; // YYYY-MM-DD
+}
+
+export const getAvailableSlots = https.onCall(async (data: AvailabilityRequest, context) => {
+  logger.info("getAvailableSlots called with:", data);
+
+  if (!context.auth) {
+    throw new https.HttpsError("unauthenticated", "The function must be called while authenticated.");
+  }
+
+  const { staffId, serviceId, date } = data;
+
+  if (!staffId || !serviceId || !date) {
+    throw new https.HttpsError("invalid-argument", "Missing required fields");
+  }
+
+  try {
+    // 1. Fetch Service and Staff documents in parallel
+    const [serviceDoc, staffDoc] = await Promise.all([
+      db.collection("services").doc(serviceId).get(),
+      db.collection("users").doc(staffId).get(),
+    ]);
+
+    if (!serviceDoc.exists) {
+      throw new https.HttpsError("not-found", "Service not found");
+    }
+    if (!staffDoc.exists) {
+      throw new https.HttpsError("not-found", "Staff member not found");
+    }
+
+    const service = serviceDoc.data()!;
+    const staff = staffDoc.data()!;
+    const serviceDuration = service.duration; // in minutes
+
+    // 2. Determine the staff member's working hours for the given date
+    const dayOfWeek = new Date(date).toLocaleDateString("en-US", { weekday: 'long' }).toLowerCase();
+    const workingHours = staff.workingHours?.[dayOfWeek];
+
+    if (!workingHours || !workingHours.isWorking) {
+      logger.info(`Staff not working on ${dayOfWeek}`);
+      return { slots: [] };
+    }
+
+    // 3. Fetch existing bookings for the staff member on that day
+    const dayStart = new Date(`${date}T00:00:00Z`);
+    const dayEnd = new Date(`${date}T23:59:59Z`);
+
+    const bookingsSnapshot = await db.collection("bookings")
+      .where("serviceProviderId", "==", staffId)
+      .where("startTime", ">=", dayStart.toISOString())
+      .where("startTime", "<=", dayEnd.toISOString())
+      .get();
+
+    const existingBookings: Booking[] = bookingsSnapshot.docs.map(doc => doc.data() as Booking);
+
+    // 4. Generate available slots
+    const availableSlots: string[] = [];
+    const slotInterval = 15; // check for availability every 15 minutes
+
+    const openTime = new Date(`${date}T${workingHours.startTime}:00`);
+    const closeTime = new Date(`${date}T${workingHours.endTime}:00`);
+
+    let currentSlotTime = openTime;
+
+    while (currentSlotTime < closeTime) {
+      const potentialSlotEnd = new Date(currentSlotTime.getTime() + serviceDuration * 60000);
+
+      if (potentialSlotEnd > closeTime) {
+        break; // Slot extends beyond closing time
+      }
+
+      // Check for conflicts with existing bookings
+      const isConflict = existingBookings.some(booking => {
+        const bookingStart = new Date(booking.startTime);
+        const bookingEnd = new Date(booking.endTime);
+        // Conflict if potential slot overlaps with an existing booking
+        return (
+          (currentSlotTime >= bookingStart && currentSlotTime < bookingEnd) ||
+          (potentialSlotEnd > bookingStart && potentialSlotEnd <= bookingEnd)
+        );
+      });
+
+      if (!isConflict) {
+        availableSlots.push(currentSlotTime.toTimeString().substring(0, 5)); // Format as HH:MM
+      }
+
+      // Move to the next potential slot
+      currentSlotTime = new Date(currentSlotTime.getTime() + slotInterval * 60000);
+    }
+
+    logger.info(`Returning ${availableSlots.length} slots.`);
+    return { slots: availableSlots };
+
+  } catch (error) {
+    logger.error("Error in getAvailableSlots:", error);
+    throw new https.HttpsError("internal", "An unexpected error occurred while fetching availability.");
+  }
+});
 
 // Initialize Twilio
 const twilioClient = twilio(

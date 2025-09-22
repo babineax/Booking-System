@@ -30,7 +30,15 @@ export interface User {
   role: "customer" | "staff" | "admin";
   isAdmin: boolean;
   isActive: boolean;
-  specialties?: string[];
+  serviceIds?: string[];
+  workingHours?: {
+    [key: string]: { isWorking: boolean; startTime: string; endTime: string };
+  };
+  googleAuth?: {
+    accessToken?: string;
+    refreshToken?: string;
+    tokenExpiry?: number;
+  };
   bio?: string;
   preferences?: Record<string, any>;
   createdAt?: any;
@@ -87,8 +95,17 @@ class UserService {
       };
 
       if (userData.role === "staff") {
-        userDoc.specialties = userData.specialties || [];
+        userDoc.serviceIds = [];
         userDoc.bio = userData.bio || "";
+        userDoc.workingHours = {
+          monday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
+          tuesday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
+          wednesday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
+          thursday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
+          friday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
+          saturday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
+          sunday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
+        };
       }
 
       if (userData.role === "customer") {
@@ -107,6 +124,80 @@ class UserService {
       return { user: userDoc, firebaseUser };
     } catch (error: any) {
       throw new Error(error.message || "Registration failed");
+    }
+  }
+
+  async addClient(
+    clientData: Omit<RegisterData, "password">
+  ): Promise<User> {
+    try {
+      // Generate a new document reference with a unique ID
+      const userDocRef = doc(collection(db, this.usersCollection));
+
+      const userDoc: User = {
+        id: userDocRef.id,
+        username: clientData.email, // Default username to email
+        email: clientData.email,
+        firstName: clientData.firstName,
+        lastName: clientData.lastName,
+        phone: clientData.phone || "",
+        role: "customer",
+        isAdmin: false,
+        isActive: true,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      const cleanUserDoc = Object.fromEntries(
+        Object.entries(userDoc).filter(([_, value]) => value !== undefined)
+      );
+
+      await setDoc(userDocRef, cleanUserDoc);
+
+      return userDoc;
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to add client");
+    }
+  }
+
+  async createStaff(
+    staffData: Omit<RegisterData, "password" | "role">
+  ): Promise<User> {
+    try {
+      // This method creates a staff profile in Firestore but does not create an auth user.
+      // The staff member would typically be invited to set their password via a separate process.
+      const userDocRef = doc(collection(db, this.usersCollection));
+
+      const userDoc: User = {
+        id: userDocRef.id,
+        username: staffData.email, // Default username to email
+        email: staffData.email,
+        firstName: staffData.firstName,
+        lastName: staffData.lastName,
+        phone: staffData.phone || "",
+        role: "staff",
+        isAdmin: false,
+        isActive: true,
+        serviceIds: [],
+        bio: staffData.bio || "",
+        workingHours: {
+          monday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
+          tuesday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
+          wednesday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
+          thursday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
+          friday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
+          saturday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
+          sunday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
+        },
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      await setDoc(userDocRef, userDoc);
+
+      return userDoc;
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to create staff member");
     }
   }
 
@@ -213,6 +304,25 @@ class UserService {
       })) as User[];
     } catch (error: any) {
       throw new Error(error.message || "Failed to get staff members");
+    }
+  }
+
+  async getClients(): Promise<User[]> {
+    try {
+      const clientsQuery = query(
+        collection(db, this.usersCollection),
+        where("role", "==", "customer"),
+        orderBy("firstName")
+      );
+
+      const querySnapshot = await getDocs(clientsQuery);
+
+      return querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as User[];
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to get clients");
     }
   }
 

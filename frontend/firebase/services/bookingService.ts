@@ -1,6 +1,4 @@
 import {
-  addDoc,
-  collection,
   deleteDoc,
   doc,
   getDoc,
@@ -22,8 +20,14 @@ class BookingService {
   private functions = getFunctions();
 
   async createBooking(bookingData: any): Promise<any> {
-    // ... (original createBooking logic)
-    return Promise.resolve();
+    try {
+      const createBookingCallable = httpsCallable(this.functions, 'createBooking');
+      const result = await createBookingCallable(bookingData);
+      return result.data;
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      throw error;
+    }
   }
 
   async getBookingById(id: string): Promise<any | null> {

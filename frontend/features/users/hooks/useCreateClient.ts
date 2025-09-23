@@ -33,7 +33,7 @@ export const useCreateClient = () => {
     mutationFn: createClient,
     onSuccess: () => {
       // Invalidate and refetch the users query to see the new client
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
     },
   });
 };

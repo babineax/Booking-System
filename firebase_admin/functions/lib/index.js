@@ -44,6 +44,37 @@ const TWILIO_PHONE_NUMBER = (_e = config.twilio) === null || _e === void 0 ? voi
 // --- API Clients ---
 const oauth2Client = new googleapis_1.google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URI);
 const twilioClient = (0, twilio_1.default)(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+// --- Callable: Create Booking ---
+exports.createBooking = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError("unauthenticated", "The function must be called while authenticated.");
+    }
+    const { serviceId, staffMemberId, customerId, startTime, endTime, clientName, clientEmail, clientPhone } = data;
+    // Basic validation
+    if (!serviceId || !staffMemberId || !customerId || !startTime || !endTime) {
+        throw new functions.https.HttpsError("invalid-argument", "Missing required booking fields.");
+    }
+    try {
+        const newBookingRef = await db.collection("bookings").add({
+            serviceId,
+            staffMemberId,
+            customerId,
+            startTime,
+            endTime,
+            clientName: clientName || null,
+            clientEmail: clientEmail || null,
+            clientPhone: clientPhone || null,
+            status: "confirmed",
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        return { id: newBookingRef.id, success: true };
+    }
+    catch (error) {
+        functions.logger.error("Error creating booking:", error);
+        throw new functions.https.HttpsError("internal", "Failed to create booking.");
+    }
+});
 // --- Callable: Availability ---
 exports.getAvailableSlots = functions.https.onCall(async (data, context) => {
     var _a;

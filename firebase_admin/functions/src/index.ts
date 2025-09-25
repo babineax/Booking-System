@@ -1,7 +1,7 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import {google} from "googleapis";
-import twilio from "twilio";
+import axios from "axios";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -12,13 +12,45 @@ const GOOGLE_CLIENT_ID = config.google?.client_id;
 const GOOGLE_CLIENT_SECRET = config.google?.client_secret;
 const REDIRECT_URI = `https://us-central1-${process.env.GCLOUD_PROJECT}.cloudfunctions.net/oauthcallback`;
 
-const TWILIO_ACCOUNT_SID = config.twilio?.account_sid;
-const TWILIO_AUTH_TOKEN = config.twilio?.auth_token;
-const TWILIO_PHONE_NUMBER = config.twilio?.phone_number;
+const META_WA_TOKEN = config.meta?.wa_token;
+const META_WA_PHONE_NUMBER_ID = config.meta?.wa_phone_number_id;
 
 // --- API Clients ---
 const oauth2Client = new google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URI);
-const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+
+// --- Helper Function for Meta API ---
+const sendWhatsAppTemplate = async (to: string, templateName: string, templateParams: string[]) => {
+    if (!META_WA_TOKEN || !META_WA_PHONE_NUMBER_ID) {
+        functions.logger.error("Meta WhatsApp credentials are not configured.");
+        return;
+    }
+
+    const messagePayload = {
+        messaging_product: "whatsapp",
+        to: to,
+        type: "template",
+        template: {
+            name: templateName,
+            language: { code: "en_US" },
+            components: [{
+                type: "body",
+                parameters: templateParams.map(param => ({ type: "text", text: param })),
+            }],
+        },
+    };
+
+    try {
+        await axios.post(
+            `https://graph.facebook.com/v19.0/${META_WA_PHONE_NUMBER_ID}/messages`,
+            messagePayload,
+            { headers: { "Authorization": `Bearer ${META_WA_TOKEN}` } }
+        );
+        functions.logger.info(`Sent ${templateName} to ${to}`);
+    } catch (error: any) {
+        functions.logger.error(`Failed to send WhatsApp message to ${to}:`, error.response?.data || error.message);
+    }
+};
+
 
 // --- Callable: Create Booking ---
 exports.createBooking = functions.https.onCall(async (data: any, context: functions.https.CallableContext) => {
@@ -173,16 +205,19 @@ exports.onBookingCreated = functions.firestore.document("bookings/{bookingId}").
             await calendar.events.insert({calendarId: "primary", requestBody: event});
         }
 
-        // WhatsApp Confirmation
+        // WhatsApp Confirmation via Meta API
         if (customerDoc.exists && customerDoc.data()?.phone) {
             const customer = customerDoc.data()!;
-            const serviceName = serviceDoc.exists ? serviceDoc.data()!.name : "a service";
-            const messageBody = `Hi ${customer.firstName}, your booking for ${serviceName} is confirmed!`;
-            await twilioClient.messages.create({
-                body: messageBody,
-                from: TWILIO_PHONE_NUMBER,
-                to: `whatsapp:${customer.phone}`,
-            });
+            const serviceName = serviceDoc.exists ? serviceDoc.data()!.name : "your service";
+            const bookingDate = new Date(booking.startTime).toLocaleDateString();
+            const bookingTime = new Date(booking.startTime).toLocaleTimeString();
+
+            await sendWhatsAppTemplate(customer.phone, "booking_confirmation", [
+                customer.firstName,
+                serviceName,
+                bookingDate,
+                bookingTime,
+            ]);
         }
     } catch (error) {
         functions.logger.error("Error in onBookingCreated trigger:", error);
@@ -210,12 +245,11 @@ exports.sendBookingReminders = functions.pubsub.schedule("every 60 minutes").onR
             const customerDoc = await db.collection("users").doc(booking.customerId).get();
             if (customerDoc.exists && customerDoc.data()?.phone) {
                 const customer = customerDoc.data()!;
-                const messageBody = `Reminder: Your booking is tomorrow at ${new Date(booking.startTime).toLocaleTimeString()}.`;
-                await twilioClient.messages.create({
-                    body: messageBody,
-                    from: TWILIO_PHONE_NUMBER,
-                    to: `whatsapp:${customer.phone}`,
-                });
+                const bookingTime = new Date(booking.startTime).toLocaleTimeString();
+                
+                // Assumes you have a template named 'booking_reminder' with one variable for the time
+                await sendWhatsAppTemplate(customer.phone, "booking_reminder", [bookingTime]);
+
                 return doc.ref.update({reminderSent: true});
             }
             return Promise.resolve();

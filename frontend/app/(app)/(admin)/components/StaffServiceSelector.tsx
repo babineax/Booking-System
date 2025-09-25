@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useGetServices } from '../../../../features/services/hooks/useGetServices';
@@ -11,13 +11,23 @@ interface ServiceSelectorProps {
 const StaffServiceSelector: React.FC<ServiceSelectorProps> = ({ selectedServiceIds, onToggleService }) => {
   const { data: services = [], isLoading } = useGetServices();
 
+  // Memoize the unique services list to prevent re-computation on every render
+  const uniqueServices = useMemo(() => {
+    const seen = new Set();
+    return services.filter(service => {
+      const duplicate = seen.has(service.id);
+      seen.add(service.id);
+      return !duplicate;
+    });
+  }, [services]);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Linked Services</Text>
       {isLoading ? (
         <Text>Loading services...</Text>
       ) : (
-        services.map(service => {
+        uniqueServices.map(service => {
           const isSelected = selectedServiceIds.includes(service.id);
           return (
             <TouchableOpacity 

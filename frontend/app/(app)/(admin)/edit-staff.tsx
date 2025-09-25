@@ -94,7 +94,9 @@ export default function EditStaffScreen() {
           Toast.show({ type: 'success', text1: 'Staff Updated' });
           queryClient.invalidateQueries({ queryKey: ['staffMembers'] });
           queryClient.invalidateQueries({ queryKey: ['staffMember', staffId] });
-          router.back();
+          setTimeout(() => {
+            router.back();
+          }, 500);
       },
       onError: (error) => {
           Toast.show({ type: 'error', text1: 'Update Failed', text2: error.message });
@@ -106,7 +108,9 @@ export default function EditStaffScreen() {
       onSuccess: () => {
           Toast.show({ type: 'success', text1: 'Staff Created' });
           queryClient.invalidateQueries({ queryKey: ['staffMembers'] });
-          router.back();
+          setTimeout(() => {
+            router.back();
+          }, 500);
       },
       onError: (error) => {
           Toast.show({ type: 'error', text1: 'Creation Failed', text2: error.message });
@@ -171,6 +175,7 @@ export default function EditStaffScreen() {
         bio,
         serviceIds,
         workingHours,
+        role: 'staff' as const, // Explicitly set the role for creation
     };
 
     if (isEditMode) {

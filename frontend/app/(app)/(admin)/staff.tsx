@@ -26,7 +26,6 @@ export default function AdminStaffScreen() {
   const handleEditStaff = useCallback(
     (staffMember: User) => {
       // Navigate to an edit screen, passing the staff member's ID
-      // This screen will be created in a future step.
       router.push({ 
         pathname: '/(app)/(admin)/edit-staff',
         params: { staffId: staffMember.id }
@@ -71,6 +70,8 @@ export default function AdminStaffScreen() {
         renderItem={renderStaffItem}
         ListEmptyComponent={<Text style={styles.emptyText}>No staff members found.</Text>}
         contentContainerStyle={styles.listContent}
+        onRefresh={refetch}
+        refreshing={isLoading}
       />
 
       <TouchableOpacity

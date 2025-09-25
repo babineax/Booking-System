@@ -1,12 +1,17 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users collection - users can read/write their own data
+
     match /users/{userId} {
+      // Admins can list all users, which is needed for the staff/client selectors
+      allow list: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+
+      // Users can read/write their own data
       allow read, write: if request.auth != null && request.auth.uid == userId;
-      // Allow admins to read all user data
-      allow read: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+
+      // Admins can read any specific user's document
+      allow get: if request.auth != null && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     

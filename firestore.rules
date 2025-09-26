@@ -3,6 +3,10 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     match /users/{userId} {
+      // Admins can create new users (staff or clients)
+      allow create: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+
       // Admins can list all users, which is needed for the staff/client selectors
       allow list: if request.auth != null &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';

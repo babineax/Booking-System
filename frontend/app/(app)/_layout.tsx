@@ -1,5 +1,5 @@
-import { Tabs } from "expo-router";
 import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
 
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>["name"];
@@ -56,7 +56,6 @@ export default function AppLayout() {
 
       {/* Role-specific routes are also hidden and accessed from the Profile screen */}
       <Tabs.Screen name="(admin)" options={{ href: null }} />
-      <Tabs.Screen name="(business)" options={{ href: null }} />
       <Tabs.Screen name="(staff)" options={{ href: null }} />
 
       {/* Utility/dev routes are hidden */}

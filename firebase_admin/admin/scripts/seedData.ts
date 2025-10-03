@@ -175,21 +175,92 @@ export async function seedUsers(): Promise<UserRecord[]> {
       await auth.setCustomUserClaims(userRecord.uid, { role: user.role });
 
       // Firestore user document (idempotent with merge)
-      await db
-        .collection("users")
-        .doc(userRecord.uid)
-        .set(
-          {
-            username: user.username,
-            role: user.role,
-            phone: user.phone,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            specialties: user.specialties || [],
-            bio: user.bio || "",
-          },
-          { merge: true }
-        );
+      await db.collection("users").doc(userRecord.uid).set(
+        {
+          email: user.email,
+          role: user.role,
+        },
+        { merge: true }
+      );
+
+      // Create role-specific profile document aligned with app expectations
+      if (user.role === "admin" || user.role === "staff") {
+        await db
+          .collection("staff")
+          .doc(userRecord.uid)
+          .set(
+            {
+              id: userRecord.uid,
+              username: user.username,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              phone: user.phone,
+              role: user.role,
+              isAdmin: user.role === "admin",
+              isActive: true,
+              serviceIds: [],
+              bio: user.bio || "",
+              workingHours: {
+                monday: {
+                  isWorking: true,
+                  startTime: "09:00",
+                  endTime: "17:00",
+                },
+                tuesday: {
+                  isWorking: true,
+                  startTime: "09:00",
+                  endTime: "17:00",
+                },
+                wednesday: {
+                  isWorking: true,
+                  startTime: "09:00",
+                  endTime: "17:00",
+                },
+                thursday: {
+                  isWorking: true,
+                  startTime: "09:00",
+                  endTime: "17:00",
+                },
+                friday: {
+                  isWorking: true,
+                  startTime: "09:00",
+                  endTime: "17:00",
+                },
+                saturday: {
+                  isWorking: false,
+                  startTime: "09:00",
+                  endTime: "17:00",
+                },
+                sunday: {
+                  isWorking: false,
+                  startTime: "09:00",
+                  endTime: "17:00",
+                },
+              },
+            },
+            { merge: true }
+          );
+      } else {
+        await db
+          .collection("clients")
+          .doc(userRecord.uid)
+          .set(
+            {
+              id: userRecord.uid,
+              username: user.username || user.email,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              phone: user.phone,
+              role: "customer",
+              isAdmin: false,
+              isActive: true,
+              preferences: {},
+            },
+            { merge: true }
+          );
+      }
 
       createdUsers.push(userRecord);
     } catch (err: any) {

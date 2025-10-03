@@ -5,9 +5,9 @@ import {
   signOut,
   updateProfile,
 } from "firebase/auth";
-import { doc, serverTimestamp, setDoc, getDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db } from "../config/firebase_config";
-import { User, LoginCredentials, RegisterData } from "../types";
+import { LoginCredentials, RegisterData, User } from "../types";
 
 class AuthService {
   private usersCollection = "users";
@@ -15,13 +15,13 @@ class AuthService {
   private clientsCollection = "clients";
 
   async register(
-    userData: RegisterData,
+    userData: RegisterData
   ): Promise<{ user: User; firebaseUser: FirebaseUser }> {
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         userData.email,
-        userData.password,
+        userData.password
       );
 
       const firebaseUser = userCredential.user;
@@ -69,7 +69,7 @@ class AuthService {
         userDoc.preferences = userData.preferences || {};
         await setDoc(
           doc(db, this.clientsCollection, firebaseUser.uid),
-          userDoc,
+          userDoc
         );
       }
 
@@ -80,20 +80,20 @@ class AuthService {
   }
 
   async login(
-    credentials: LoginCredentials,
+    credentials: LoginCredentials
   ): Promise<{ user: User; firebaseUser: FirebaseUser }> {
     try {
       const userCredential = await signInWithEmailAndPassword(
         auth,
         credentials.email,
-        credentials.password,
+        credentials.password
       );
 
       const firebaseUser = userCredential.user;
 
       // Get user role from the users collection
       const userRoleDoc = await getDoc(
-        doc(db, this.usersCollection, firebaseUser.uid),
+        doc(db, this.usersCollection, firebaseUser.uid)
       );
       if (!userRoleDoc.exists()) {
         throw new Error("User role not found");
@@ -136,7 +136,7 @@ class AuthService {
     if (!currentUser) return null;
 
     const userRoleDoc = await getDoc(
-      doc(db, this.usersCollection, currentUser.uid),
+      doc(db, this.usersCollection, currentUser.uid)
     );
     if (!userRoleDoc.exists()) {
       return null;

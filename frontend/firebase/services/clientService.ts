@@ -11,17 +11,20 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../config/firebase_config";
-import { User, RegisterData } from "../types";
+import { RegisterData, User } from "../types";
 
 class ClientService {
   private clientsCollection = "clients";
   private usersCollection = "users";
 
   async addClient(
-    clientData: Omit<RegisterData, "password" | "role">,
+    clientData: Omit<RegisterData, "password" | "role"> & { id?: string }
   ): Promise<User> {
     try {
-      const clientDocRef = doc(collection(db, this.clientsCollection));
+      // If caller provides an id (e.g., Firebase Auth UID), use it so login can resolve.
+      const clientDocRef = clientData.id
+        ? doc(db, this.clientsCollection, clientData.id)
+        : doc(collection(db, this.clientsCollection));
       const userDocRef = doc(db, this.usersCollection, clientDocRef.id);
 
       const clientDoc: Partial<User> = {
@@ -39,7 +42,16 @@ class ClientService {
       };
 
       await setDoc(clientDocRef, clientDoc);
-      await setDoc(userDocRef, clientDoc);
+      // Keep users doc minimal and authoritative for role lookup
+      await setDoc(
+        userDocRef,
+        {
+          email: clientDoc.email,
+          role: "customer",
+          createdAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
 
       return clientDoc as User;
     } catch (error: any) {
@@ -65,7 +77,7 @@ class ClientService {
     try {
       const clientsQuery = query(
         collection(db, this.clientsCollection),
-        orderBy("firstName"),
+        orderBy("firstName")
       );
 
       const querySnapshot = await getDocs(clientsQuery);
@@ -100,10 +112,8 @@ class ClientService {
 
   async deleteClient(id: string): Promise<void> {
     try {
-      // Note: This only deletes the Firestore record. The auth user, if one exists, is separate.
+      // Delete client profile; do not automatically delete users doc to avoid breaking auth
       await deleteDoc(doc(db, this.clientsCollection, id));
-      // Optionally, also delete the user record
-      await deleteDoc(doc(db, this.usersCollection, id));
     } catch (error: any) {
       throw new Error(error.message || "Failed to delete client");
     }

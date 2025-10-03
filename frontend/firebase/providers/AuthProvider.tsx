@@ -36,7 +36,7 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const dispatch = useDispatch();
   const { userInfo, firebaseUser, isAuthenticated, isLoading } = useSelector(
-    (state: RootState) => state.auth,
+    (state: RootState) => state.auth
   );
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (firebaseUser) {
           dispatch(setFirebaseUser(firebaseUser));
 
-          const user = await authService.getCurrentUserData();
+          const userData = await authService.getCurrentUserData();
           if (userData) {
             dispatch(setCredentials({ user: userData, firebaseUser }));
           } else {

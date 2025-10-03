@@ -1,5 +1,5 @@
-import { authService } from "./services/authService";
-import { serviceService } from "./services/serviceService";
+import { authService } from "./services/authService.ts";
+import { serviceService } from "./services/serviceService.ts";
 
 const seedData = {
   users: [
@@ -123,7 +123,7 @@ async function seedServices(staffUsers) {
     } catch (error) {
       console.error(
         `Failed to create service ${serviceData.name}:`,
-        error.message,
+        error.message
       );
     }
   }

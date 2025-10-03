@@ -44,5 +44,23 @@ service cloud.firestore {
          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
     }
+    
+    // Staff collection - users can read/write their own staff profile; admins can read/write any
+    match /staff/{staffId} {
+      allow read, write: if request.auth != null && (
+        request.auth.uid == staffId ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    // Clients collection - users can read/write their own client profile; admins can read/write any
+    match /clients/{clientId} {
+      allow read, write: if request.auth != null && (
+        request.auth.uid == clientId ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
   }
 }

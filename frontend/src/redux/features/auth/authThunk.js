@@ -16,7 +16,7 @@ export const initAuth = () => async (dispatch) => {
           setCredentials({
             user: freshUser || storedUser,
             firebaseUser,
-          }),
+          })
         );
       } else {
         dispatch(logout());
@@ -49,7 +49,16 @@ export const loginUser = (email, password) => async (dispatch) => {
     // Step 3: Update Redux state
     dispatch(setCredentials({ user, firebaseUser }));
   } catch (error) {
-    console.error("Login error", error);
+    // Show the error to the user (if in React Native, use Alert)
+    if (typeof window === "undefined" && global && global.Alert) {
+      global.Alert.alert("Login Failed", error.message || "An error occurred");
+    } else if (typeof window !== "undefined" && window.alert) {
+      window.alert("Login Failed: " + (error.message || "An error occurred"));
+    } else {
+      // fallback: log to console
+      console.error("Login error", error);
+    }
+    // Optionally, you can dispatch an error state here if you want to show it in the UI
   } finally {
     dispatch(setLoading(false));
   }

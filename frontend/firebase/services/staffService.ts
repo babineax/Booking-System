@@ -9,21 +9,21 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
-  where,
 } from "firebase/firestore";
 import { db } from "../config/firebase_config";
-import { User, RegisterData } from "../types";
+import { RegisterData, User } from "../types";
 
 class StaffService {
   private staffCollection = "staff";
   private usersCollection = "users";
 
   async createStaff(
-    staffData: Omit<RegisterData, "password" | "role">,
+    staffData: Omit<RegisterData, "password" | "role">
   ): Promise<User> {
     try {
       // This method creates a staff profile in Firestore but does not create an auth user.
-      const staffDocRef = doc(collection(db, this.usersCollection));
+      // Store staff profiles in the dedicated staff collection.
+      const staffDocRef = doc(collection(db, this.staffCollection));
 
       const staffDoc: User = {
         id: staffDocRef.id,
@@ -60,7 +60,7 @@ class StaffService {
 
   async getStaffById(id: string): Promise<User | null> {
     try {
-      const staffDoc = await getDoc(doc(db, this.usersCollection, id));
+      const staffDoc = await getDoc(doc(db, this.staffCollection, id));
 
       if (staffDoc.exists()) {
         return { id: staffDoc.id, ...staffDoc.data() } as User;
@@ -75,9 +75,8 @@ class StaffService {
   async getStaffMembers(): Promise<User[]> {
     try {
       const staffQuery = query(
-        collection(db, this.usersCollection),
-        where("role", "==", "staff"),
-        orderBy("firstName"),
+        collection(db, this.staffCollection),
+        orderBy("firstName")
       );
 
       const querySnapshot = await getDocs(staffQuery);
@@ -93,7 +92,7 @@ class StaffService {
 
   async updateStaff(id: string, updates: Partial<User>): Promise<User> {
     try {
-      const staffRef = doc(db, this.usersCollection, id);
+      const staffRef = doc(db, this.staffCollection, id);
       await updateDoc(staffRef, {
         ...updates,
         updatedAt: serverTimestamp(),
@@ -112,8 +111,8 @@ class StaffService {
 
   async deleteStaff(id: string): Promise<void> {
     try {
-      // Also delete the user record
-      await deleteDoc(doc(db, this.usersCollection, id));
+      // Delete from staff collection only (do not touch users collection here)
+      await deleteDoc(doc(db, this.staffCollection, id));
     } catch (error: any) {
       throw new Error(error.message || "Failed to delete staff member");
     }

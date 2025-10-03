@@ -10,15 +10,15 @@ export {
   type CreateBusinessHoursData,
 } from "./services/businessHoursService";
 export {
+  clientService,
+  type LoginCredentials,
+  type RegisterData,
+  type User,
+} from "./services/clientService";
+export {
   serviceService,
   type CreateServiceData,
   type Service,
 } from "./services/serviceService";
-export {
-  userService,
-  type LoginCredentials,
-  type RegisterData,
-  type User,
-} from "./services/userService";
 
 export { auth, db } from "./config/firebase_config";

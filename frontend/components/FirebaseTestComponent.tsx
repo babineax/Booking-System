@@ -1,7 +1,8 @@
 import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import { serviceService, userService, type Service } from "../firebase";
+import { serviceService, Service } from "../firebase/services/serviceService";
+// import { userService } from "../firebase";
 import { auth, db } from "../firebase/config/firebase_config";
 
 const FirebaseTestComponent = () => {
@@ -34,7 +35,7 @@ const FirebaseTestComponent = () => {
       addDetail(
         `Auth current user: ${
           auth.currentUser ? auth.currentUser.email : "None"
-        }`
+        }`,
       );
 
       // Test direct Firestore connection
@@ -42,7 +43,7 @@ const FirebaseTestComponent = () => {
       try {
         const usersSnapshot = await getDocs(collection(db, "users"));
         addDetail(
-          `✓ Direct Firestore query successful. Users: ${usersSnapshot.size}`
+          `✓ Direct Firestore query successful. Users: ${usersSnapshot.size}`,
         );
       } catch (directError: any) {
         addDetail(`❌ Direct Firestore error: ${directError.message}`);
@@ -67,25 +68,25 @@ const FirebaseTestComponent = () => {
     }
   };
 
-  const testUserRegistration = async () => {
-    try {
-      const testUser = {
-        username: "testuser",
-        email: "test@example.com",
-        password: "test123",
-        firstName: "Test",
-        lastName: "User",
-        role: "customer" as const,
-      };
+  // const testUserRegistration = async () => {
+  //   try {
+  //     const testUser = {
+  //       username: "testuser",
+  //       email: "test@example.com",
+  //       password: "test123",
+  //       firstName: "Test",
+  //       lastName: "User",
+  //       role: "customer" as const,
+  //     };
 
-      const result = await userService.register(testUser);
-      Alert.alert("Success", "Test user created successfully!");
-      console.log("User created:", result);
-    } catch (error: any) {
-      Alert.alert("Error", `Failed to create user: ${error.message}`);
-      console.error("User creation error:", error);
-    }
-  };
+  //     const result = await userService.register(testUser);
+  //     Alert.alert("Success", "Test user created successfully!");
+  //     console.log("User created:", result);
+  //   } catch (error: any) {
+  //     Alert.alert("Error", `Failed to create user: ${error.message}`);
+  //     console.error("User creation error:", error);
+  //   }
+  // };
 
   return (
     <ScrollView
@@ -106,8 +107,8 @@ const FirebaseTestComponent = () => {
           color: firebaseStatus.includes("❌")
             ? "red"
             : firebaseStatus.includes("✅")
-            ? "green"
-            : "orange",
+              ? "green"
+              : "orange",
           fontSize: 16,
           fontWeight: "bold",
         }}
@@ -132,7 +133,7 @@ const FirebaseTestComponent = () => {
         <Text style={{ color: "white" }}>Test Firebase Connection</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
+      {/* <TouchableOpacity
         onPress={testUserRegistration}
         style={{
           backgroundColor: "#28a745",
@@ -143,7 +144,7 @@ const FirebaseTestComponent = () => {
         }}
       >
         <Text style={{ color: "white" }}>Test User Registration</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       <View
         style={{ backgroundColor: "#f8f9fa", padding: 10, borderRadius: 5 }}
@@ -161,8 +162,8 @@ const FirebaseTestComponent = () => {
               color: detail.includes("❌")
                 ? "red"
                 : detail.includes("✓")
-                ? "green"
-                : "black",
+                  ? "green"
+                  : "black",
             }}
           >
             {detail}

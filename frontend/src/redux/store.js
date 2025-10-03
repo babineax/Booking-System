@@ -2,13 +2,13 @@ import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query/react";
 import { firebaseBookingsApiSlice } from "./apis/firebaseBookingsApiSlice";
 import { firebaseBusinessHoursApiSlice } from "./apis/firebaseBusinessHoursApiSlice";
+import { firebasePeopleApiSlice } from "./apis/firebasePeopleApiSlice";
 import { firebaseServicesApiSlice } from "./apis/firebaseServicesApiSlice";
-import { firebaseUsersApiSlice } from "./apis/firebaseUsersApiSlice";
 import authReducer from "./features/auth/authSlice";
 
 export const store = configureStore({
   reducer: {
-    [firebaseUsersApiSlice.reducerPath]: firebaseUsersApiSlice.reducer,
+    [firebasePeopleApiSlice.reducerPath]: firebasePeopleApiSlice.reducer,
     [firebaseServicesApiSlice.reducerPath]: firebaseServicesApiSlice.reducer,
     [firebaseBookingsApiSlice.reducerPath]: firebaseBookingsApiSlice.reducer,
     [firebaseBusinessHoursApiSlice.reducerPath]:
@@ -22,7 +22,7 @@ export const store = configureStore({
         ignoredPaths: ["firebase", "firestore"],
       },
     }).concat(
-      firebaseUsersApiSlice.middleware,
+      firebasePeopleApiSlice.middleware,
       firebaseServicesApiSlice.middleware,
       firebaseBookingsApiSlice.middleware,
       firebaseBusinessHoursApiSlice.middleware

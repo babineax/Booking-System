@@ -1,10 +1,22 @@
-import { StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from "react-native";
-import { useGetStaff } from "../features/users/hooks/useGetStaff";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useGetStaff } from "../features/staff/hooks/useGetStaff";
 
-export default function StaffSelector({ serviceId, staff, setStaff, onNext, onBack }) {
+export default function StaffSelector({
+  serviceId,
+  staff,
+  setStaff,
+  onNext,
+  onBack,
+}) {
   const { data: allStaff = [], isLoading } = useGetStaff();
 
-  const qualifiedStaff = allStaff.filter(member => 
+  const qualifiedStaff = allStaff.filter((member) =>
     member.serviceIds?.includes(serviceId)
   );
 
@@ -26,7 +38,9 @@ export default function StaffSelector({ serviceId, staff, setStaff, onNext, onBa
           </TouchableOpacity>
         ))
       ) : (
-        <Text style={styles.noStaffText}>No staff members are available for this service.</Text>
+        <Text style={styles.noStaffText}>
+          No staff members are available for this service.
+        </Text>
       )}
       <View style={styles.buttons}>
         <TouchableOpacity style={styles.button} onPress={onBack}>
@@ -75,9 +89,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#ccc",
   },
   noStaffText: {
-    textAlign: 'center',
+    textAlign: "center",
     marginVertical: 20,
     fontSize: 16,
-    color: '#718096',
-  }
+    color: "#718096",
+  },
 });

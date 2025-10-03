@@ -9,7 +9,7 @@ import {
 } from "../../src/redux/features/auth/authSlice";
 import { RootState } from "../../src/redux/types";
 import { auth } from "../config/firebase_config";
-import { userService } from "../services/userService";
+import { authService } from "../services/authService";
 import { AuthContextType } from "../types/auth";
 
 const AuthContext = createContext<AuthContextType>({
@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (firebaseUser) {
           dispatch(setFirebaseUser(firebaseUser));
 
-          const userData = await userService.getUserById(firebaseUser.uid);
+          const user = await authService.getCurrentUserData();
           if (userData) {
             dispatch(setCredentials({ user: userData, firebaseUser }));
           } else {

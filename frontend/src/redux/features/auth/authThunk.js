@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../../../firebase/config/firebase_config";
-import { userService } from "../../../../firebase/services/userService";
+import { authService } from "../../../../firebase/services/authService";
 import { logout, setCredentials, setLoading } from "./authSlice";
 
 export const initAuth = () => async (dispatch) => {
@@ -11,12 +11,12 @@ export const initAuth = () => async (dispatch) => {
       if (firebaseUser) {
         const storedUserJSON = await AsyncStorage.getItem("userInfo");
         const storedUser = storedUserJSON ? JSON.parse(storedUserJSON) : null;
-        const freshUser = await userService.getUserById(firebaseUser.uid);
+        const freshUser = await authService.getUserById(firebaseUser.uid);
         dispatch(
           setCredentials({
             user: freshUser || storedUser,
             firebaseUser,
-          })
+          }),
         );
       } else {
         dispatch(logout());
@@ -36,7 +36,7 @@ export const loginUser = (email, password) => async (dispatch) => {
   dispatch(setLoading(true));
   try {
     // Step 1: Firebase login + fetch user profile
-    const { user, firebaseUser } = await userService.login({ email, password });
+    const { user, firebaseUser } = await authService.login({ email, password });
 
     // Step 2: Store in AsyncStorage
     const idToken = await firebaseUser.getIdToken();
@@ -57,7 +57,7 @@ export const loginUser = (email, password) => async (dispatch) => {
 
 export const logoutUser = () => async (dispatch) => {
   try {
-    await userService.logout();
+    await authService.logout();
     await AsyncStorage.clear();
     dispatch(logout());
   } catch (error) {

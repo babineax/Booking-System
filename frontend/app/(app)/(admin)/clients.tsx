@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -9,56 +9,46 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useGetStaff } from "../../../features/staff/hooks/useGetStaff";
+import { useGetClients } from "../../../features/clients/hooks/useGetClients";
 import { User } from "../../../firebase/types";
 
-const useStaffMembers = useGetStaff;
-
-export default function AdminStaffScreen() {
-  const {
-    data: staff = [],
-    isLoading,
-    isRefreshing,
-    refetch,
-  } = useStaffMembers();
+export default function AdminClientsScreen() {
+  const { data: clients = [], isLoading, refetch } = useGetClients();
   const router = useRouter();
 
-  const handleEditStaff = useCallback(
-    (staffMember: User) => {
-      // Navigate to an edit screen, passing the staff member's ID
+  const handleBookForClient = useCallback(
+    (client: User) => {
       router.push({
-        pathname: "/(app)/(admin)/edit-staff",
-        params: { staffId: staffMember.id },
+        pathname: "/(app)/booking",
+        params: { clientId: client.id },
       });
     },
     [router],
   );
 
-  const renderStaffItem = useCallback(
+  const renderClientItem = useCallback(
     ({ item }: { item: User }) => (
-      <TouchableOpacity
-        style={styles.staffCard}
-        onPress={() => handleEditStaff(item)}
-      >
-        <View style={styles.staffInfo}>
-          <Text
-            style={styles.staffName}
-          >{`${item.firstName} ${item.lastName}`}</Text>
-          <Text style={styles.staffContact}>{item.email}</Text>
+      <View style={styles.clientCard}>
+        <View style={styles.clientInfo}>
+          <Text style={styles.clientName}>{`${item.firstName} ${item.lastName}`}</Text>
+          <Text style={styles.clientContact}>{item.email}</Text>
         </View>
-        <View style={styles.staffActions}>
-          <Text style={styles.actionText}>Edit</Text>
-        </View>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.bookButton}
+          onPress={() => handleBookForClient(item)}
+        >
+          <Text style={styles.bookButtonText}>Book Now</Text>
+        </TouchableOpacity>
+      </View>
     ),
-    [handleEditStaff],
+    [handleBookForClient],
   );
 
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#4A90E2" />
-        <Text style={styles.loadingText}>Loading staff...</Text>
+        <Text style={styles.loadingText}>Loading clients...</Text>
       </View>
     );
   }
@@ -66,16 +56,14 @@ export default function AdminStaffScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Staff ({staff.length})</Text>
+        <Text style={styles.headerTitle}>Clients ({clients.length})</Text>
       </View>
 
       <FlatList
-        data={staff}
+        data={clients}
         keyExtractor={(item) => item.id!}
-        renderItem={renderStaffItem}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>No staff members found.</Text>
-        }
+        renderItem={renderClientItem}
+        ListEmptyComponent={<Text style={styles.emptyText}>No clients found.</Text>}
         contentContainerStyle={styles.listContent}
         onRefresh={refetch}
         refreshing={isLoading}
@@ -83,10 +71,10 @@ export default function AdminStaffScreen() {
 
       <TouchableOpacity
         style={styles.addButton}
-        onPress={() => router.push("/(app)/(admin)/edit-staff")}
+        onPress={() => router.push("/(app)/(admin)/create-client")}
         activeOpacity={0.8}
       >
-        <Text style={styles.addButtonText}>+ Add New Staff</Text>
+        <Text style={styles.addButtonText}>+ Add New Client</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -109,7 +97,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingBottom: 100, // Space for floating add button
+    paddingBottom: 100,
   },
   loadingContainer: {
     flex: 1,
@@ -121,7 +109,7 @@ const styles = StyleSheet.create({
     color: "#6B7280",
     fontSize: 16,
   },
-  staffCard: {
+  clientCard: {
     backgroundColor: "white",
     padding: 16,
     borderRadius: 12,
@@ -135,24 +123,27 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
   },
-  staffInfo: {
+  clientInfo: {
     flex: 1,
   },
-  staffName: {
+  clientName: {
     fontSize: 16,
     fontWeight: "600",
     color: "#1F2937",
     marginBottom: 4,
   },
-  staffContact: {
+  clientContact: {
     fontSize: 13,
     color: "#6B7280",
   },
-  staffActions: {
-    flexDirection: "row",
+  bookButton: {
+    backgroundColor: "#4A90E2",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
-  actionText: {
-    color: "#4A90E2",
+  bookButtonText: {
+    color: "white",
     fontWeight: "600",
     fontSize: 13,
   },

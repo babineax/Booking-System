@@ -31,6 +31,7 @@ export default function BookingPage() {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedServiceId, setSelectedServiceId] = useState("");
+  const [selectedStaffId, setSelectedStaffId] = useState("");
 
   const { data: services = [], isLoading: servicesLoading } = useGetServices();
 
@@ -42,7 +43,12 @@ export default function BookingPage() {
   const handleEdit = () => setStep(0);
 
   const handleConfirmBooking = () => {
-    if (!selectedServiceId || !selectedDate || !selectedTime) {
+    if (
+      !selectedServiceId ||
+      !selectedDate ||
+      !selectedTime ||
+      !selectedStaffId
+    ) {
       Alert.alert(
         "Error",
         "Please make sure you have selected a service, date, and time.",
@@ -59,6 +65,7 @@ export default function BookingPage() {
         serviceId: selectedServiceId,
         startTime: startTimeISO,
         clientId: clientId, // Pass clientId if it exists
+        serviceProviderId: selectedStaffId,
       },
       {
         onSuccess: () => {
@@ -136,6 +143,7 @@ export default function BookingPage() {
             onNext={handleNext}
             onBack={handleBack}
             serviceId={selectedServiceId}
+            setStaffId={setSelectedStaffId}
           />
         );
       case 3:

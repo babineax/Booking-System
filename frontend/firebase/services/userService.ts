@@ -1,348 +1,81 @@
+// firebase/services/userService.ts
 import {
   createUserWithEmailAndPassword,
   User as FirebaseUser,
   signInWithEmailAndPassword,
-  signOut,
-  updateProfile,
 } from "firebase/auth";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  where,
-} from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db } from "../config/firebase_config";
-
-export interface User {
-  id?: string;
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  phone?: string;
-  role: "customer" | "staff" | "admin";
-  isAdmin: boolean;
-  isActive: boolean;
-  serviceIds?: string[];
-  workingHours?: {
-    [key: string]: { isWorking: boolean; startTime: string; endTime: string };
-  };
-  googleAuth?: {
-    accessToken?: string;
-    refreshToken?: string;
-    tokenExpiry?: number;
-  };
-  bio?: string;
-  preferences?: Record<string, any>;
-  createdAt?: any;
-  updatedAt?: any;
-}
-
-export interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-export interface RegisterData extends LoginCredentials {
-  username: string;
-  firstName: string;
-  lastName: string;
-  phone?: string;
-  role?: "customer" | "staff" | "admin";
-  specialties?: string[];
-  bio?: string;
-  preferences?: Record<string, any>;
-}
+import { LoginCredentials, RegisterData, User } from "../types";
 
 class UserService {
   private usersCollection = "users";
 
-  async register(
-    userData: RegisterData
-  ): Promise<{ user: User; firebaseUser: FirebaseUser }> {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        userData.email,
-        userData.password
-      );
+  /**
+   * Register a new user in Firebase Auth + Firestore
+   */
+  async register({
+    email,
+    password,
+    firstName,
+    lastName,
+    phone,
+  }: RegisterData): Promise<User> {
+    // Create Firebase Auth account
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+    const firebaseUser = userCredential.user;
 
-      const firebaseUser = userCredential.user;
+    // Create user profile document in Firestore
+    const userDoc: User = {
+      id: firebaseUser.uid,
+      email: firebaseUser.email!,
+      firstName,
+      lastName,
+      phone: phone || "",
+      role: "customer",
+      isAdmin: false,
+      isActive: true,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      username: "",
+    };
 
-      await updateProfile(firebaseUser, {
-        displayName: `${userData.firstName} ${userData.lastName}`,
-      });
+    await setDoc(doc(db, this.usersCollection, firebaseUser.uid), userDoc);
 
-      const userDoc: User = {
-        id: firebaseUser.uid,
-        username: userData.username,
-        email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        phone: userData.phone || "",
-        role: userData.role || "customer",
-        isAdmin: userData.role === "admin",
-        isActive: true,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
+    return userDoc;
+  }
 
-      if (userData.role === "staff") {
-        userDoc.serviceIds = [];
-        userDoc.bio = userData.bio || "";
-        userDoc.workingHours = {
-          monday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
-          tuesday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
-          wednesday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
-          thursday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
-          friday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
-          saturday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
-          sunday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
-        };
-      }
+  /**
+   * Login with email + password
+   */
+  async login({
+    email,
+    password,
+  }: LoginCredentials): Promise<{ user: User; firebaseUser: FirebaseUser }> {
+    // Firebase Auth login
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+    const firebaseUser = userCredential.user;
 
-      if (userData.role === "customer") {
-        userDoc.preferences = userData.preferences || {};
-      }
+    // Fetch user profile from Firestore
+    const docSnap = await getDoc(
+      doc(db, this.usersCollection, firebaseUser.uid)
+    );
 
-      const cleanUserDoc = Object.fromEntries(
-        Object.entries(userDoc).filter(([_, value]) => value !== undefined)
-      );
-
-      await setDoc(
-        doc(db, this.usersCollection, firebaseUser.uid),
-        cleanUserDoc
-      );
-
-      return { user: userDoc, firebaseUser };
-    } catch (error: any) {
-      throw new Error(error.message || "Registration failed");
+    if (!docSnap.exists()) {
+      throw new Error("User profile not found in Firestore");
     }
-  }
 
-  async addClient(
-    clientData: Omit<RegisterData, "password">
-  ): Promise<User> {
-    try {
-      // Generate a new document reference with a unique ID
-      const userDocRef = doc(collection(db, this.usersCollection));
+    const user = { id: firebaseUser.uid, ...docSnap.data() } as User;
 
-      const userDoc: User = {
-        id: userDocRef.id,
-        username: clientData.email, // Default username to email
-        email: clientData.email,
-        firstName: clientData.firstName,
-        lastName: clientData.lastName,
-        phone: clientData.phone || "",
-        role: "customer",
-        isAdmin: false,
-        isActive: true,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-
-      const cleanUserDoc = Object.fromEntries(
-        Object.entries(userDoc).filter(([_, value]) => value !== undefined)
-      );
-
-      await setDoc(userDocRef, cleanUserDoc);
-
-      return userDoc;
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to add client");
-    }
-  }
-
-  async createStaff(
-    staffData: Omit<RegisterData, "password" | "role">
-  ): Promise<User> {
-    try {
-      // This method creates a staff profile in Firestore but does not create an auth user.
-      // The staff member would typically be invited to set their password via a separate process.
-      const userDocRef = doc(collection(db, this.usersCollection));
-
-      const userDoc: User = {
-        id: userDocRef.id,
-        username: staffData.email, // Default username to email
-        email: staffData.email,
-        firstName: staffData.firstName,
-        lastName: staffData.lastName,
-        phone: staffData.phone || "",
-        role: "staff",
-        isAdmin: false,
-        isActive: true,
-        serviceIds: [],
-        bio: staffData.bio || "",
-        workingHours: {
-          monday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
-          tuesday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
-          wednesday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
-          thursday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
-          friday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
-          saturday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
-          sunday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
-        },
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-
-      await setDoc(userDocRef, userDoc);
-
-      return userDoc;
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to create staff member");
-    }
-  }
-
-  async login(
-    credentials: LoginCredentials
-  ): Promise<{ user: User; firebaseUser: FirebaseUser }> {
-    try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        credentials.email,
-        credentials.password
-      );
-
-      const firebaseUser = userCredential.user;
-      const user = await this.getUserById(firebaseUser.uid);
-
-      if (!user) {
-        throw new Error("User data not found");
-      }
-
-      return { user, firebaseUser };
-    } catch (error: any) {
-      throw new Error(error.message || "Login failed");
-    }
-  }
-
-  async logout(): Promise<void> {
-    try {
-      await signOut(auth);
-    } catch (error: any) {
-      throw new Error(error.message || "Logout failed");
-    }
-  }
-
-  async getUserById(id: string): Promise<User | null> {
-    try {
-      const userDoc = await getDoc(doc(db, this.usersCollection, id));
-
-      if (userDoc.exists()) {
-        return { id: userDoc.id, ...userDoc.data() } as User;
-      }
-
-      return null;
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to get user");
-    }
-  }
-
-  async updateUser(id: string, updates: Partial<User>): Promise<User> {
-    try {
-      const userRef = doc(db, this.usersCollection, id);
-      await updateDoc(userRef, {
-        ...updates,
-        updatedAt: serverTimestamp(),
-      });
-
-      const updatedUser = await this.getUserById(id);
-      if (!updatedUser) {
-        throw new Error("Failed to retrieve updated user");
-      }
-
-      return updatedUser;
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to update user");
-    }
-  }
-
-  async updateProfile(id: string, profileData: Partial<User>): Promise<User> {
-    return this.updateUser(id, profileData);
-  }
-
-  async getAllUsers(): Promise<User[]> {
-    try {
-      const usersQuery = query(
-        collection(db, this.usersCollection),
-        orderBy("createdAt", "desc")
-      );
-
-      const querySnapshot = await getDocs(usersQuery);
-
-      return querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as User[];
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to get users");
-    }
-  }
-
-  async getStaffMembers(): Promise<User[]> {
-    try {
-      const staffQuery = query(
-        collection(db, this.usersCollection),
-        where("role", "in", ["staff", "admin"]),
-        where("isActive", "==", true),
-        orderBy("firstName")
-      );
-
-      const querySnapshot = await getDocs(staffQuery);
-
-      return querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as User[];
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to get staff members");
-    }
-  }
-
-  async getClients(): Promise<User[]> {
-    try {
-      const clientsQuery = query(
-        collection(db, this.usersCollection),
-        where("role", "==", "customer"),
-        orderBy("firstName")
-      );
-
-      const querySnapshot = await getDocs(clientsQuery);
-
-      return querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as User[];
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to get clients");
-    }
-  }
-
-  async deleteUser(id: string): Promise<void> {
-    try {
-      await deleteDoc(doc(db, this.usersCollection, id));
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to delete user");
-    }
-  }
-
-  getCurrentUser(): FirebaseUser | null {
-    return auth.currentUser;
-  }
-
-  async getCurrentUserData(): Promise<User | null> {
-    const currentUser = this.getCurrentUser();
-    if (!currentUser) return null;
-
-    return this.getUserById(currentUser.uid);
+    return { user, firebaseUser };
   }
 }
 

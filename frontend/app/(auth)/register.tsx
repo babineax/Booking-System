@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { useDispatch } from "react-redux";
-import { userService } from "../../firebase/services/userService";
+import { authService } from "../../firebase/services/authService";
 import { setCredentials } from "../../src/redux/features/auth/authSlice";
 
 type RegisterForm = {
@@ -62,7 +62,7 @@ const RegisterScreen = () => {
 
     try {
       setIsLoading(true);
-      const { user, firebaseUser } = await userService.register(form);
+      const { user, firebaseUser } = await authService.register(form);
 
       // Set credentials in Redux store
       dispatch(
@@ -70,7 +70,7 @@ const RegisterScreen = () => {
           user: user,
           token: await firebaseUser.getIdToken(),
           isAdmin: user.isAdmin,
-        }),
+        })
       );
 
       Alert.alert("Success", "Registration successful!", [

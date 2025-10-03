@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { userService } from "../firebase/services/userService";
+import { clientService } from "../firebase/services/clientService";
 
 export const AuthDebugComponent = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -30,7 +30,7 @@ export const AuthDebugComponent = () => {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const allUsers = await userService.getAllUsers();
+      const allUsers = await clientService.getAllUsers();
       setUsers(allUsers);
       console.log("All users:", allUsers);
     } catch (error: any) {
@@ -50,7 +50,7 @@ export const AuthDebugComponent = () => {
       console.log(
         `Testing login for ${credentials.label} (${credentials.email})`
       );
-      const result = await userService.login({
+      const result = await clientService.login({
         email: credentials.email,
         password: credentials.password,
       });
@@ -59,7 +59,7 @@ export const AuthDebugComponent = () => {
       Alert.alert("Success", `Login successful for ${credentials.label}`);
 
       // Logout immediately
-      await userService.logout();
+      await clientService.logout();
     } catch (error: any) {
       console.error(`Login failed for ${credentials.label}:`, error);
       Alert.alert("Login Failed", `${credentials.label}: ${error.message}`);

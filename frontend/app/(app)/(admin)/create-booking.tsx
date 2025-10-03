@@ -1,18 +1,18 @@
-import { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useGetServices } from "../../../features/services/hooks/useGetServices";
-import { useCreateBooking } from "../../../features/booking/hooks/useCreateBooking";
-import { useGetClients } from "../../../features/users/hooks/useGetClients";
-import { useCreateClient } from "../../../features/users/hooks/useCreateClient";
+import { useEffect, useState } from "react";
+import { Alert, StyleSheet, Text, View } from "react-native";
+import Toast from "react-native-toast-message";
+import BookingConfirmation from "../../../components/BookingConfirmation";
+import DatePicker from "../../../components/DatePicker";
 import ServiceSelector from "../../../components/ServiceSelector";
 import StaffSelector from "../../../components/StaffSelector";
-import DatePicker from "../../../components/DatePicker";
 import TimeSlotSelector from "../../../components/TimeSlotSelector";
-import BookingConfirmation from "../../../components/BookingConfirmation";
-import ClientSelector from "./components/ClientSelector";
+import { useCreateBooking } from "../../../features/booking/hooks/useCreateBooking";
+import { useCreateClient } from "../../../features/clients/hooks/useCreateClient";
+import { useGetClients } from "../../../features/clients/hooks/useGetClients";
+import { useGetServices } from "../../../features/services/hooks/useGetServices";
 import AddClientModal from "./components/AddClientModal";
-import Toast from "react-native-toast-message";
+import ClientSelector from "./components/ClientSelector";
 
 export default function AdminCreateBookingScreen() {
   const router = useRouter();
@@ -32,11 +32,17 @@ export default function AdminCreateBookingScreen() {
 
   // Data fetching hooks
   const { data: services = [], isLoading: servicesLoading } = useGetServices();
-  const { data: clients = [], isLoading: clientsLoading, refetch: refetchClients } = useGetClients();
-  
+  const {
+    data: clients = [],
+    isLoading: clientsLoading,
+    refetch: refetchClients,
+  } = useGetClients();
+
   // Mutation hooks
-  const { mutate: createBooking, isPending: bookingLoading } = useCreateBooking();
-  const { mutate: createClient, isPending: isCreatingClient } = useCreateClient();
+  const { mutate: createBooking, isPending: bookingLoading } =
+    useCreateBooking();
+  const { mutate: createClient, isPending: isCreatingClient } =
+    useCreateClient();
 
   // If a client is passed via params, set it and skip to the service selection step
   useEffect(() => {
@@ -56,39 +62,57 @@ export default function AdminCreateBookingScreen() {
     handleNext();
   };
 
-  const handleSaveClient = (clientData: { firstName: string; lastName: string; email: string; phone: string; }) => {
+  const handleSaveClient = (clientData: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+  }) => {
     createClient(clientData, {
       onSuccess: (newlyCreatedClient) => {
         setModalVisible(false);
         Toast.show({
-          type: 'success',
-          text1: 'Client Added',
+          type: "success",
+          text1: "Client Added",
           text2: `${clientData.firstName} ${clientData.lastName} has been added.`,
         });
-        refetchClients().then(data => {
-            const newClient = data?.data?.find(c => c.id === newlyCreatedClient.id)
-            if (newClient) {
-                handleSelectClient(newClient.id!, `${newClient.firstName} ${newClient.lastName}`);
-            }
+        refetchClients().then((data) => {
+          const newClient = data?.data?.find(
+            (c) => c.id === newlyCreatedClient.id
+          );
+          if (newClient) {
+            handleSelectClient(
+              newClient.id!,
+              `${newClient.firstName} ${newClient.lastName}`
+            );
+          }
         });
       },
       onError: (error) => {
         Toast.show({
-          type: 'error',
-          text1: 'Creation Failed',
-          text2: error.message || 'An unexpected error occurred.',
+          type: "error",
+          text1: "Creation Failed",
+          text2: error.message || "An unexpected error occurred.",
         });
       },
     });
   };
 
   const handleConfirmBooking = () => {
-    if (!selectedServiceId || !selectedStaffId || !selectedDate || !selectedTime || !selectedClientId) {
+    if (
+      !selectedServiceId ||
+      !selectedStaffId ||
+      !selectedDate ||
+      !selectedTime ||
+      !selectedClientId
+    ) {
       Alert.alert("Error", "Please complete all previous steps.");
       return;
     }
 
-    const startTimeISO = new Date(`${selectedDate}T${selectedTime}`).toISOString();
+    const startTimeISO = new Date(
+      `${selectedDate}T${selectedTime}`
+    ).toISOString();
 
     createBooking(
       {
@@ -113,11 +137,12 @@ export default function AdminCreateBookingScreen() {
             text2: error.message || "An unexpected error occurred.",
           });
         },
-      },
+      }
     );
   };
 
-  const selectedService = services.find((s) => s.id === selectedServiceId) || null;
+  const selectedService =
+    services.find((s) => s.id === selectedServiceId) || null;
 
   const renderStep = () => {
     switch (step) {
@@ -192,9 +217,11 @@ export default function AdminCreateBookingScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>New Booking for {selectedClientName || "..."}</Text>
+      <Text style={styles.header}>
+        New Booking for {selectedClientName || "..."}
+      </Text>
       {renderStep()}
-      <AddClientModal 
+      <AddClientModal
         isVisible={isModalVisible}
         onClose={() => setModalVisible(false)}
         onSave={handleSaveClient}
@@ -203,7 +230,6 @@ export default function AdminCreateBookingScreen() {
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {

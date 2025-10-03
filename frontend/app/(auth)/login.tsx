@@ -13,7 +13,7 @@ import {
   View,
 } from "react-native";
 import { useDispatch } from "react-redux";
-import { userService } from "../../firebase/services/userService";
+import { authService } from "../../firebase/services/authService";
 import { setCredentials } from "../../src/redux/features/auth/authSlice";
 
 const LoginScreen = () => {
@@ -40,7 +40,7 @@ const LoginScreen = () => {
       setIsLoading(true);
       console.log("Attempting login with email:", email.trim());
 
-      const { user, firebaseUser } = await userService.login({
+      const { user, firebaseUser } = await authService.login({
         email: email.trim().toLowerCase(),
         password,
       });
@@ -53,7 +53,7 @@ const LoginScreen = () => {
           user: user,
           token: await firebaseUser.getIdToken(),
           isAdmin: user.isAdmin,
-        }),
+        })
       );
 
       console.log("Credentials set, navigating...");

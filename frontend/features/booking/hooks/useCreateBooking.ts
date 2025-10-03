@@ -29,11 +29,6 @@ const callCreateBooking = async (
 ): Promise<CreateBookingResponse> => {
   try {
     const result = await createBookingCallable(data);
-    // After successful booking, trigger the calendar sync function
-    if (result.data.success && result.data.bookingId) {
-      const onBookingCreated = httpsCallable(functions, 'onBookingCreated');
-      await onBookingCreated({ bookingId: result.data.bookingId });
-    }
     return result.data;
   } catch (error) {
     // The error object from Firebase Functions has a message and code

@@ -9,6 +9,8 @@ import {
 import { useAuth } from "../../firebase/providers/AuthProvider";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
+import AdminDashboard from "./(admin)/components/AdminDashboard";
+
 // Placeholder for a bookings list component
 const UserBookingsList = () => (
   <View style={styles.placeholder}>
@@ -47,35 +49,21 @@ const ProfileScreen = () => {
       </View>
 
       {/* Role-specific Dashboards */}
-      {(isAdmin || isStaff) && (
+      {isAdmin && <AdminDashboard />}
+      {isStaff && (
         <View style={styles.dashboardSection}>
           <Text style={styles.sectionTitle}>My Dashboard</Text>
-          {isAdmin && (
-            <TouchableOpacity
-              style={styles.dashboardButton}
-              onPress={() => router.push("/(app)/(admin)")}
-            >
-              <MaterialCommunityIcons
-                name="shield-crown"
-                size={24}
-                color="white"
-              />
-              <Text style={styles.dashboardButtonText}>Admin Dashboard</Text>
-            </TouchableOpacity>
-          )}
-          {isStaff && (
-            <TouchableOpacity
-              style={styles.dashboardButton}
-              onPress={() => router.push("/(app)/(staff)")}
-            >
-              <MaterialCommunityIcons
-                name="briefcase-account"
-                size={24}
-                color="white"
-              />
-              <Text style={styles.dashboardButtonText}>Staff Dashboard</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            style={styles.dashboardButton}
+            onPress={() => router.push("/(app)/(staff)")}
+          >
+            <MaterialCommunityIcons
+              name="briefcase-account"
+              size={24}
+              color="white"
+            />
+            <Text style={styles.dashboardButtonText}>Staff Dashboard</Text>
+          </TouchableOpacity>
         </View>
       )}
 

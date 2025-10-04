@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -19,6 +20,13 @@ export default function AdminClientsScreen() {
   const { data: clients = [], isLoading, refetch } = useGetClients();
   const { mutate: deleteClient, isPending: isDeleting } = useDeleteClient();
   const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredClients = clients.filter((client) =>
+    `${client.firstName} ${client.lastName}`
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase())
+  );
 
   const handleBookForClient = useCallback(
     (client: User) => {
@@ -126,11 +134,17 @@ export default function AdminClientsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Clients ({clients.length})</Text>
+        <Text style={styles.headerTitle}>Clients ({filteredClients.length})</Text>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search clients..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
       </View>
 
       <FlatList
-        data={clients}
+        data={filteredClients}
         keyExtractor={(item) => item.id!}
         renderItem={renderClientItem}
         ListEmptyComponent={
@@ -166,6 +180,16 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#1F2937",
+    marginBottom: 12,
+  },
+  searchInput: {
+    backgroundColor: "white",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
   listContent: {
     paddingHorizontal: 16,

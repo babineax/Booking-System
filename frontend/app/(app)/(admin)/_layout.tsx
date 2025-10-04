@@ -1,17 +1,13 @@
-import { Stack } from "expo-router";
+import { Drawer } from "expo-router/drawer";
 
 export default function AdminLayout() {
   return (
-    <Stack>
-      <Stack.Screen name="index" options={{ title: "Dashboard" }} />
-      <Stack.Screen name="clients" options={{ title: "Clients" }} />
-      <Stack.Screen name="staff" options={{ title: "Staff" }} />
-      <Stack.Screen name="bookings" options={{ title: "Bookings" }} />
-      <Stack.Screen
-        name="create-booking"
-        options={{ title: "Create Booking" }}
-      />
-      <Stack.Screen name="dev-tools" options={{ title: "Developer Tools" }} />
-    </Stack>
+    <Drawer>
+      <Drawer.Screen name="(tabs)" options={{ title: "Dashboard" }} />
+      <Drawer.Screen name="clients" options={{ title: "Clients" }} />
+      <Drawer.Screen name="staff" options={{ title: "Staff" }} />
+      <Drawer.Screen name="bookings" options={{ title: "Bookings" }} />
+      <Drawer.Screen name="dev-tools" options={{ title: "Developer Tools" }} />
+    </Drawer>
   );
 }

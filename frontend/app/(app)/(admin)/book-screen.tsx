@@ -1,5 +1,6 @@
 import DatePicker from "@/components/DatePicker"; // <- custom DatePicker
 import { Picker } from "@react-native-picker/picker";
+import { useGlobalSearchParams } from "expo-router";
 import { addDoc, collection, getDocs, Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
@@ -44,22 +45,32 @@ const BookingScreen = () => {
   const [step, setStep] = useState(0);
   const [services, setServices] = useState<any[]>([]);
   const [staff, setStaff] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
   const [selectedService, setSelectedService] = useState("");
   const [selectedStaff, setSelectedStaff] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [loading, setLoading] = useState(false);
+  const { clientId } = useGlobalSearchParams();
 
-  // Fetch services & staff
+  // Fetch services, staff, and clients
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const serviceSnapshot = await getDocs(collection(db, "services"));
+        const [serviceSnapshot, staffSnapshot, clientSnapshot] =
+          await Promise.all([
+            getDocs(collection(db, "services")),
+            getDocs(collection(db, "staff")),
+            getDocs(collection(db, "clients")),
+          ]);
+
         setServices(
           serviceSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
         );
-        const staffSnapshot = await getDocs(collection(db, "staff"));
         setStaff(
           staffSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        );
+        setClients(
+          clientSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
         );
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -86,6 +97,7 @@ const BookingScreen = () => {
         serviceId: selectedService,
         staffMemberId: selectedStaff,
         startTime: selectedDate.toISOString(),
+        clientId: clientId || null,
         status: "pending",
         paymentStatus: "pending",
         totalPrice: 25,
@@ -115,6 +127,8 @@ const BookingScreen = () => {
   };
 
   const renderStep = () => {
+    const client = clients.find((c) => c.id === clientId);
+
     switch (step) {
       case 0: // Select Service
         return (
@@ -200,6 +214,10 @@ const BookingScreen = () => {
           <View style={styles.card}>
             <Text style={styles.heading}>Confirm Booking</Text>
             <Text style={styles.summary}>
+              Client:{" "}
+              {client ? `${client.firstName} ${client.lastName}` : "Self"}
+            </Text>
+            <Text style={styles.summary}>
               Service:{" "}
               {services.find((s) => s.id === selectedService)?.name || "-"}
             </Text>
@@ -251,20 +269,13 @@ const BookingScreen = () => {
 export default BookingScreen;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: "#f9f9f9",
-  },
+  container: { flex: 1, padding: 16, backgroundColor: "#f9f9f9" },
   stepperContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 20,
   },
-  stepContainer: {
-    alignItems: "center",
-    flex: 1,
-  },
+  stepContainer: { alignItems: "center", flex: 1 },
   stepCircle: {
     width: 32,
     height: 32,
@@ -273,13 +284,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 4,
   },
-  stepNumber: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  stepLabel: {
-    fontSize: 12,
-  },
+  stepNumber: { color: "#fff", fontWeight: "bold" },
+  stepLabel: { fontSize: 12 },
   card: {
     backgroundColor: "#fff",
     padding: 20,
@@ -289,11 +295,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  heading: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 12,
-  },
+  heading: { fontSize: 18, fontWeight: "600", marginBottom: 12 },
   button: {
     backgroundColor: "#0066cc",
     padding: 12,
@@ -309,16 +311,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 8,
   },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-  stepActions: {
-    flexDirection: "row",
-    marginTop: 16,
-  },
-  summary: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
+  buttonText: { color: "#fff", fontWeight: "600" },
+  stepActions: { flexDirection: "row", marginTop: 16 },
+  summary: { fontSize: 16, marginBottom: 8 },
 });

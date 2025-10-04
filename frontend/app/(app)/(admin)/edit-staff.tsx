@@ -1,5 +1,10 @@
-import { useRouter, useLocalSearchParams, useURL } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import * as Linking from "expo-linking";
+import { useURL } from "expo-linking";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -11,29 +16,26 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { staffService } from "../../../firebase/services/staffService";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getFunctions, httpsCallable } from "firebase/functions";
-import * as Linking from "expo-linking";
-import * as WebBrowser from "expo-web-browser";
 import Toast from "react-native-toast-message";
+import { staffService } from "../../../firebase/services/staffService";
 
 import StaffServiceSelector from "./components/StaffServiceSelector";
-import { WorkingHours } from "./components/WorkingHoursEditor";
+import WorkingHoursEditor, {
+  WorkingHours,
+} from "./components/WorkingHoursEditor";
 
 import { User } from "../../../firebase/types";
 
 // --- PLACEHOLDER ---
-// This should be the same Client ID you provided for the backend
 const GOOGLE_CLIENT_ID = "YOUR_CLIENT_ID_HERE";
-// This should be a URL that can trigger your app to open
 const REDIRECT_URI = Linking.createURL("");
 
+// React Query hook for fetching staff member
 const useStaffMember = (staffId?: string) => {
   return useQuery<User | null, Error>({
     queryKey: ["staffMember", staffId],
     queryFn: () => (staffId ? staffService.getStaffById(staffId) : null),
-    enabled: !!staffId, // Only run if staffId is provided
+    enabled: !!staffId,
   });
 };
 
@@ -54,6 +56,7 @@ export default function EditStaffScreen() {
 
   const isEditMode = !!staffId;
 
+  // preload staff data if editing
   useEffect(() => {
     if (staffMember) {
       setFirstName(staffMember.firstName || "");
@@ -71,19 +74,21 @@ export default function EditStaffScreen() {
           friday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
           saturday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
           sunday: { isWorking: false, startTime: "09:00", endTime: "17:00" },
-        },
+        }
       );
     }
   }, [staffMember]);
 
+  // service toggler
   const handleToggleService = (serviceId: string) => {
     setServiceIds((prev) =>
       prev.includes(serviceId)
         ? prev.filter((id) => id !== serviceId)
-        : [...prev, serviceId],
+        : [...prev, serviceId]
     );
   };
 
+  // working hours updater
   const handleUpdateWorkingHours = (day: string, updates: any) => {
     setWorkingHours((prev) => ({
       ...prev,
@@ -91,7 +96,8 @@ export default function EditStaffScreen() {
     }));
   };
 
-  const { mutate: updateUser, isPending: isUpdating } = useMutation<
+  // ✅ updateStaff mutation
+  const { mutate: updateStaff, isPending: isUpdating } = useMutation<
     User,
     Error,
     Partial<User>
@@ -114,6 +120,7 @@ export default function EditStaffScreen() {
     },
   });
 
+  // ✅ createStaff mutation
   const { mutate: createStaff, isPending: isCreating } = useMutation<
     User,
     Error,
@@ -136,24 +143,25 @@ export default function EditStaffScreen() {
     },
   });
 
+  // Google connect
   const handleGoogleConnect = async () => {
     const authUrl =
       `https://accounts.google.com/o/oauth2/v2/auth?` +
       `client_id=${GOOGLE_CLIENT_ID}` +
       `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
       `&response_type=code` +
-      `&scope=${encodeURIComponent("https://www.googleapis.com/auth/calendar")}` +
+      `&scope=${encodeURIComponent(
+        "https://www.googleapis.com/auth/calendar"
+      )}` +
       `&access_type=offline` +
-      `&prompt=consent`; // Important to get a refresh token every time
+      `&prompt=consent`;
 
     await WebBrowser.openAuthSessionAsync(authUrl, REDIRECT_URI);
   };
 
   const isGoogleConnected = !!staffMember?.googleAuth?.refreshToken;
 
-  // We will add the logic to handle the redirect and token exchange in the next step
-
-  const { mutate: exchangeCode, isPending: isExchangingCode } = useMutation<
+  const { mutate: exchangeCode } = useMutation<
     any,
     Error,
     { code: string; staffId: string }
@@ -161,7 +169,7 @@ export default function EditStaffScreen() {
     mutationFn: (vars) => {
       const handleGoogleAuthCallback = httpsCallable(
         getFunctions(),
-        "handleGoogleAuthCallback",
+        "handleGoogleAuthCallback"
       );
       return handleGoogleAuthCallback(vars);
     },
@@ -184,14 +192,13 @@ export default function EditStaffScreen() {
     if (url) {
       const { queryParams } = Linking.parse(url);
       if (queryParams?.code && staffId) {
-        // Close the browser window
         WebBrowser.dismissAuthSession();
-        // Exchange the code for tokens
         exchangeCode({ code: queryParams.code as string, staffId });
       }
     }
   }, [url, staffId]);
 
+  // save handler
   const handleSave = () => {
     if (!firstName || !lastName || !email) {
       Alert.alert("Error", "First name, last name, and email are required.");
@@ -206,11 +213,11 @@ export default function EditStaffScreen() {
       bio,
       serviceIds,
       workingHours,
-      role: "staff" as const, // Explicitly set the role for creation
+      role: "staff" as const,
     };
 
     if (isEditMode) {
-      updateUser(staffData);
+      updateStaff(staffData);
     } else {
       createStaff(staffData as any);
     }
@@ -292,7 +299,7 @@ export default function EditStaffScreen() {
         <Button
           title={isEditMode ? "Save Changes" : "Create Staff Member"}
           onPress={handleSave}
-          disabled={isUpdating}
+          disabled={isUpdating || isCreating}
         />
       </View>
     </SafeAreaView>

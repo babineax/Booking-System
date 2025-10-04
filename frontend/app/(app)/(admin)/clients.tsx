@@ -31,7 +31,7 @@ export default function AdminClientsScreen() {
   const handleBookForClient = useCallback(
     (client: User) => {
       router.push({
-        pathname: "/(app)/booking",
+        pathname: "/(app)/book-screen",
         params: { clientId: client.id },
       });
     },
@@ -134,7 +134,9 @@ export default function AdminClientsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Clients ({filteredClients.length})</Text>
+        <Text style={styles.headerTitle}>
+          Clients ({filteredClients.length})
+        </Text>
         <TextInput
           style={styles.searchInput}
           placeholder="Search clients..."

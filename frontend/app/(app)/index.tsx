@@ -17,7 +17,14 @@ export default function SplashScreen() {
         const userData = await AsyncStorage.getItem("userInfo");
 
         if (userData && userInfo) {
-          router.replace("/dashboard");
+          const role = (userInfo as any)?.role;
+          if (role === "admin") {
+            router.replace("/(app)/(admin)/dashboard");
+          } else if (role === "staff") {
+            router.replace("/(app)/(staff)");
+          } else {
+            router.replace("/(app)/profile");
+          }
         } else {
           router.replace("/login");
         }

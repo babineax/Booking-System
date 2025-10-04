@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { useCallback } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   SafeAreaView,
   StyleSheet,
@@ -9,11 +10,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
+import { useDeleteClient } from "../../../features/clients/hooks/useDeleteClient";
 import { useGetClients } from "../../../features/clients/hooks/useGetClients";
 import { User } from "../../../firebase/types";
 
 export default function AdminClientsScreen() {
   const { data: clients = [], isLoading, refetch } = useGetClients();
+  const { mutate: deleteClient, isPending: isDeleting } = useDeleteClient();
   const router = useRouter();
 
   const handleBookForClient = useCallback(
@@ -23,25 +27,91 @@ export default function AdminClientsScreen() {
         params: { clientId: client.id },
       });
     },
-    [router],
+    [router]
+  );
+
+  const handleEditClient = useCallback(
+    (client: User) => {
+      router.push({
+        pathname: "/(app)/(admin)/edit-client",
+        params: { clientId: client.id },
+      });
+    },
+    [router]
+  );
+
+  const handleDeleteClient = useCallback(
+    (client: User) => {
+      Alert.alert(
+        "Delete Client",
+        `Are you sure you want to delete ${client.firstName} ${client.lastName}? This action cannot be undone.`,
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: () => {
+              deleteClient(client.id!, {
+                onSuccess: () => {
+                  Toast.show({
+                    type: "success",
+                    text1: "Client Deleted",
+                    text2: `${client.firstName} ${client.lastName} has been deleted.`,
+                  });
+                },
+                onError: (error) => {
+                  Toast.show({
+                    type: "error",
+                    text1: "Delete Failed",
+                    text2: error.message,
+                  });
+                },
+              });
+            },
+          },
+        ]
+      );
+    },
+    [deleteClient]
   );
 
   const renderClientItem = useCallback(
     ({ item }: { item: User }) => (
       <View style={styles.clientCard}>
         <View style={styles.clientInfo}>
-          <Text style={styles.clientName}>{`${item.firstName} ${item.lastName}`}</Text>
+          <Text
+            style={styles.clientName}
+          >{`${item.firstName} ${item.lastName}`}</Text>
           <Text style={styles.clientContact}>{item.email}</Text>
+          {item.phone && <Text style={styles.clientPhone}>{item.phone}</Text>}
         </View>
-        <TouchableOpacity
-          style={styles.bookButton}
-          onPress={() => handleBookForClient(item)}
-        >
-          <Text style={styles.bookButtonText}>Book Now</Text>
-        </TouchableOpacity>
+        <View style={styles.clientActions}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleEditClient(item)}
+          >
+            <Text style={styles.actionButtonText}>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.bookButton}
+            onPress={() => handleBookForClient(item)}
+          >
+            <Text style={styles.bookButtonText}>Book</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={() => handleDeleteClient(item)}
+            disabled={isDeleting}
+          >
+            <Text style={styles.deleteButtonText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     ),
-    [handleBookForClient],
+    [handleBookForClient, handleEditClient, handleDeleteClient, isDeleting]
   );
 
   if (isLoading) {
@@ -63,7 +133,9 @@ export default function AdminClientsScreen() {
         data={clients}
         keyExtractor={(item) => item.id!}
         renderItem={renderClientItem}
-        ListEmptyComponent={<Text style={styles.emptyText}>No clients found.</Text>}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>No clients found.</Text>
+        }
         contentContainerStyle={styles.listContent}
         onRefresh={refetch}
         refreshing={isLoading}
@@ -114,9 +186,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     elevation: 2,
     shadowColor: "#000",
     shadowOpacity: 0.05,
@@ -124,7 +193,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   clientInfo: {
-    flex: 1,
+    marginBottom: 12,
   },
   clientName: {
     fontSize: 16,
@@ -135,17 +204,55 @@ const styles = StyleSheet.create({
   clientContact: {
     fontSize: 13,
     color: "#6B7280",
+    marginBottom: 2,
+  },
+  clientPhone: {
+    fontSize: 13,
+    color: "#6B7280",
+  },
+  clientActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  actionButton: {
+    backgroundColor: "#F3F4F6",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    flex: 1,
+  },
+  actionButtonText: {
+    color: "#374151",
+    fontWeight: "600",
+    fontSize: 12,
+    textAlign: "center",
   },
   bookButton: {
     backgroundColor: "#4A90E2",
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
+    flex: 1,
   },
   bookButtonText: {
     color: "white",
     fontWeight: "600",
-    fontSize: 13,
+    fontSize: 12,
+    textAlign: "center",
+  },
+  deleteButton: {
+    backgroundColor: "#EF4444",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    flex: 1,
+  },
+  deleteButtonText: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 12,
+    textAlign: "center",
   },
   emptyText: {
     textAlign: "center",

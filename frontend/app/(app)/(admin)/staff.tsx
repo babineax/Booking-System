@@ -1,7 +1,8 @@
 import { useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   SafeAreaView,
   StyleSheet,
@@ -9,6 +10,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
+import { useDeleteStaff } from "../../../features/staff/hooks/useDeleteStaff";
 import { useGetStaff } from "../../../features/staff/hooks/useGetStaff";
 import { User } from "../../../firebase/types";
 
@@ -21,6 +24,7 @@ export default function AdminStaffScreen() {
     isRefreshing,
     refetch,
   } = useStaffMembers();
+  const { mutate: deleteStaff, isPending: isDeleting } = useDeleteStaff();
   const router = useRouter();
 
   const handleEditStaff = useCallback(
@@ -31,27 +35,80 @@ export default function AdminStaffScreen() {
         params: { staffId: staffMember.id },
       });
     },
-    [router],
+    [router]
+  );
+
+  const handleDeleteStaff = useCallback(
+    (staffMember: User) => {
+      Alert.alert(
+        "Delete Staff Member",
+        `Are you sure you want to delete ${staffMember.firstName} ${staffMember.lastName}? This action cannot be undone.`,
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: () => {
+              deleteStaff(staffMember.id!, {
+                onSuccess: () => {
+                  Toast.show({
+                    type: "success",
+                    text1: "Staff Deleted",
+                    text2: `${staffMember.firstName} ${staffMember.lastName} has been deleted.`,
+                  });
+                },
+                onError: (error) => {
+                  Toast.show({
+                    type: "error",
+                    text1: "Delete Failed",
+                    text2: error.message,
+                  });
+                },
+              });
+            },
+          },
+        ]
+      );
+    },
+    [deleteStaff]
   );
 
   const renderStaffItem = useCallback(
     ({ item }: { item: User }) => (
-      <TouchableOpacity
-        style={styles.staffCard}
-        onPress={() => handleEditStaff(item)}
-      >
+      <View style={styles.staffCard}>
         <View style={styles.staffInfo}>
           <Text
             style={styles.staffName}
           >{`${item.firstName} ${item.lastName}`}</Text>
           <Text style={styles.staffContact}>{item.email}</Text>
+          {item.phone && <Text style={styles.staffPhone}>{item.phone}</Text>}
+          {item.bio && (
+            <Text style={styles.staffBio} numberOfLines={2}>
+              {item.bio}
+            </Text>
+          )}
         </View>
         <View style={styles.staffActions}>
-          <Text style={styles.actionText}>Edit</Text>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => handleEditStaff(item)}
+          >
+            <Text style={styles.editButtonText}>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={() => handleDeleteStaff(item)}
+            disabled={isDeleting}
+          >
+            <Text style={styles.deleteButtonText}>Delete</Text>
+          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+      </View>
     ),
-    [handleEditStaff],
+    [handleEditStaff, handleDeleteStaff, isDeleting]
   );
 
   if (isLoading) {
@@ -126,9 +183,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     elevation: 2,
     shadowColor: "#000",
     shadowOpacity: 0.05,
@@ -136,7 +190,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   staffInfo: {
-    flex: 1,
+    marginBottom: 12,
   },
   staffName: {
     fontSize: 16,
@@ -147,14 +201,48 @@ const styles = StyleSheet.create({
   staffContact: {
     fontSize: 13,
     color: "#6B7280",
+    marginBottom: 2,
+  },
+  staffPhone: {
+    fontSize: 13,
+    color: "#6B7280",
+    marginBottom: 4,
+  },
+  staffBio: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    fontStyle: "italic",
   },
   staffActions: {
     flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 8,
   },
-  actionText: {
-    color: "#4A90E2",
+  editButton: {
+    backgroundColor: "#4A90E2",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    flex: 1,
+  },
+  editButtonText: {
+    color: "white",
     fontWeight: "600",
     fontSize: 13,
+    textAlign: "center",
+  },
+  deleteButton: {
+    backgroundColor: "#EF4444",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    flex: 1,
+  },
+  deleteButtonText: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 13,
+    textAlign: "center",
   },
   emptyText: {
     textAlign: "center",

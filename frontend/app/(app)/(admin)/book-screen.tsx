@@ -93,6 +93,32 @@ const BookingScreen = () => {
     }
     setLoading(true);
     try {
+      // 🔍 Check if this client already has a booking for this service and date
+      const bookingRef = collection(db, "bookings");
+      const snapshot = await getDocs(bookingRef);
+
+      const existingBooking = snapshot.docs.find((doc) => {
+        const data = doc.data();
+        const sameClient = data.clientId === clientId;
+        const sameService = data.serviceId === selectedService;
+        const sameDate =
+          new Date(data.startTime).toDateString() ===
+          selectedDate.toDateString();
+        return sameClient && sameService && sameDate;
+      });
+
+      if (existingBooking) {
+        Toast.show({
+          type: "error",
+          text1: "Duplicate Booking ❌",
+          text2:
+            "This client already has a booking for the same date and service.",
+        });
+        setLoading(false);
+        return;
+      }
+
+      // ✅ If no duplicate, proceed to add booking
       await addDoc(collection(db, "bookings"), {
         serviceId: selectedService,
         staffMemberId: selectedStaff,

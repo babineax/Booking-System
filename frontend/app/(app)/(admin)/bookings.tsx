@@ -36,23 +36,32 @@ export default function AdminBookingsScreen() {
             const bookingData = bookingDoc.data();
             let clientName = "Unknown Client";
 
-            if (bookingData.userId) {
-              const userRef = doc(db, "users", bookingData.userId);
-              const userSnap = await getDoc(userRef);
-              if (userSnap.exists()) {
-                const userData = userSnap.data();
-                clientName = `${userData.firstName} ${userData.lastName}`;
+            // ✅ FIX: use clientId, not userId
+            if (bookingData.clientId) {
+              const clientRef = doc(db, "clients", bookingData.clientId);
+              const clientSnap = await getDoc(clientRef);
+              if (clientSnap.exists()) {
+                const clientData = clientSnap.data();
+                clientName = `${clientData.firstName} ${clientData.lastName}`;
+              }
+            }
+
+            // ✅ handle date properly (Firestore Timestamp or string)
+            let bookingDate = "No Date";
+            if (bookingData.startTime) {
+              if (bookingData.startTime.seconds) {
+                bookingDate = new Date(
+                  bookingData.startTime.seconds * 1000
+                ).toLocaleString();
+              } else {
+                bookingDate = new Date(bookingData.startTime).toLocaleString();
               }
             }
 
             return {
               id: bookingDoc.id,
               client: clientName,
-              date: bookingData.startTime
-                ? new Date(
-                    bookingData.startTime.seconds * 1000
-                  ).toLocaleString()
-                : "No Date",
+              date: bookingDate,
               status: bookingData.status || "Pending",
             };
           })

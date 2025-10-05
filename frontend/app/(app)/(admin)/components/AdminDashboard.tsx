@@ -1,10 +1,5 @@
 import { useRouter } from "expo-router";
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useGetClients } from "../../../../features/clients/hooks/useGetClients";
 import { useGetStaff } from "../../../../features/staff/hooks/useGetStaff";
 

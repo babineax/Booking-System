@@ -1,36 +1,38 @@
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
+  ActivityIndicator,
   ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useAuth } from "../../firebase/providers/AuthProvider";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import AdminDashboard from "./(admin)/components/AdminDashboard";
 
-// Placeholder for a bookings list component
-const UserBookingsList = () => (
-  <View style={styles.placeholder}>
-    <Text>Your bookings will appear here.</Text>
-  </View>
-);
-
 const ProfileScreen = () => {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
 
   const handleLogout = () => {
     logout();
     router.replace("/login");
-    // After logout, the root layout should redirect to the login screen.
   };
 
-  const role = (user as any)?.role || ""; // temp safeguard
+  const role = (user as any)?.role || "";
   const isAdmin = role === "admin";
   const isStaff = role === "staff";
+
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#4A90E2" />
+        <Text style={styles.loaderText}>Loading your profile...</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -66,12 +68,6 @@ const ProfileScreen = () => {
           </TouchableOpacity>
         </View>
       )}
-
-      {/* User Bookings */}
-      <View style={styles.bookingsSection}>
-        <Text style={styles.sectionTitle}>My Bookings</Text>
-        <UserBookingsList />
-      </View>
     </ScrollView>
   );
 };
@@ -138,17 +134,16 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginLeft: 10,
   },
-  bookingsSection: {
-    paddingHorizontal: 20,
-  },
-  placeholder: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 10,
-    alignItems: "center",
+  loaderContainer: {
+    flex: 1,
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#eee",
+    alignItems: "center",
+  },
+  loaderText: {
+    marginTop: 10,
+    color: "#4A90E2",
+    fontSize: 16,
+    fontWeight: "500",
   },
 });
 

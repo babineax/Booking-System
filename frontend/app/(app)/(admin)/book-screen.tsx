@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import Toast from "react-native-toast-message";
+import { addEventToGoogleCalendar } from "../(admin)/utils/googleCalendar";
 import { db } from "../../../firebase/config";
 
 const Stepper = ({ step }: { step: number }) => {
@@ -136,6 +137,17 @@ const BookingScreen = () => {
         text1: "Booking Confirmed 🎉",
         text2: "Your appointment has been scheduled.",
       });
+      const service = services.find((s) => s.id === selectedService);
+      const duration = service ? service.duration : 60; // Default to 60 mins
+      await addEventToGoogleCalendar(
+        `Booking for ${services.find((s) => s.id === selectedService)?.name}`,
+        `With ${staff.find((s) => s.id === selectedStaff)?.firstName} ${
+          staff.find((s) => s.id === selectedStaff)?.lastName
+        }`,
+        selectedDate,
+        new Date(selectedDate.getTime() + duration * 60 * 1000), // End time
+      );
+
       // Reset state
       setStep(0);
       setSelectedService("");

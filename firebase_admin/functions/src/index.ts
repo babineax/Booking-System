@@ -484,3 +484,45 @@ exports.sendBookingReminders = functions.pubsub
       functions.logger.error("Error in sendBookingReminders:", error);
     }
   });
+
+// --- Webhook for Meta (WhatsApp) ---
+exports.whatsAppWebhook = functions.https.onRequest(
+  async (req: functions.https.Request, res: functions.Response) => {
+    const VERIFY_TOKEN = config.meta?.webhook_verify_token; // Set this in your Firebase config
+
+    // Handle the verification request from Meta
+    if (
+      req.method === "GET" &&
+      req.query["hub.mode"] === "subscribe" &&
+      req.query["hub.verify_token"] === VERIFY_TOKEN
+    ) {
+      functions.logger.info("Webhook verification successful!");
+      res.status(200).send(req.query["hub.challenge"]);
+      return;
+    }
+
+    // Handle incoming messages
+    if (req.method === "POST") {
+      const entry = req.body.entry?.[0];
+      const change = entry?.changes?.[0];
+      const message = change?.value?.messages?.[0];
+
+      if (message?.type === "text") {
+        const from = message.from; // User's phone number
+        const text = message.text.body;
+
+        functions.logger.info(`Message from ${from}: ${text}`);
+
+        // Example: Acknowledge receipt of the message
+        await sendWhatsAppTemplate(from, "message_received", [text]);
+      }
+
+      res.status(200).send("EVENT_RECEIVED");
+      return;
+    }
+
+    // If the request is not a GET or POST, or verification fails
+    functions.logger.warn("Webhook received an invalid request.");
+    res.sendStatus(403);
+  },
+);

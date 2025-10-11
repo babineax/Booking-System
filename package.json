@@ -20,5 +20,12 @@
     "firebase": "^12.1.0",
     "react": "19.1.0",
     "react-native": "0.81.4"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/react": "~19.1.10",
+    "mocha": "^11.7.4",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.9.2"
   }
 }

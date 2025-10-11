@@ -2,13 +2,13 @@
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { Alert } from "react-native";
-
 import Constants from "expo-constants";
 
 WebBrowser.maybeCompleteAuthSession();
 
 const GOOGLE_CLIENT_ID =
-  Constants.expoConfig?.extra?.googleClientId || "default_client_id";
+  Constants.expoConfig?.extra?.googleClientId ||
+  "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
 
 const discovery = {
   authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
@@ -20,12 +20,16 @@ export async function addEventToGoogleCalendar(
   summary: string,
   description: string,
   startDate: Date,
-  endDate: Date
+  endDate: Date,
 ) {
   try {
-    const redirectUri = "https://auth.expo.io/@gideonsitienei/booking-system";
+    // ✅ Use Expo's redirect helper
+    const redirectUri = AuthSession.makeRedirectUri({
+      useProxy: true, // this ensures Expo Go can handle the redirect properly
+    });
 
-    // 🔐 Request Google auth
+    console.log("Redirect URI:", redirectUri);
+
     const authRequest = new AuthSession.AuthRequest({
       clientId: GOOGLE_CLIENT_ID,
       redirectUri,
@@ -35,20 +39,35 @@ export async function addEventToGoogleCalendar(
         "email",
         "https://www.googleapis.com/auth/calendar",
       ],
-      responseType: AuthSession.ResponseType.Token,
-      usePKCE: false, // Disable PKCE for implicit flow
+      responseType: AuthSession.ResponseType.Code,
+      usePKCE: true, // Enable PKCE
     });
 
-    const result = await authRequest.promptAsync(discovery, { useProxy: true });
+    const result = await authRequest.promptAsync(discovery, {
+      useProxy: true, // 👈 important for Expo Go testing
+    });
 
-    if (result.type !== "success" || !result.authentication?.accessToken) {
+    if (result.type !== "success") {
       Alert.alert("Authentication failed", "Could not log in to Google");
       return;
     }
 
-    const accessToken = result.authentication.accessToken;
+    // Exchange the authorization code for an access token
+    const tokenResponse = await AuthSession.exchangeCodeAsync(
+      {
+        clientId: GOOGLE_CLIENT_ID,
+        code: result.params.code,
+        redirectUri,
+        extraParams: {
+          code_verifier: authRequest.codeVerifier || "",
+        },
+      },
+      discovery,
+    );
 
-    // 🗓️ Create calendar event via Google Calendar API
+    const accessToken = tokenResponse.accessToken;
+
+    // 🗓️ Create event
     const event = {
       summary,
       description,
@@ -65,20 +84,20 @@ export async function addEventToGoogleCalendar(
           "Content-Type": "application/json",
         },
         body: JSON.stringify(event),
-      }
+      },
     );
 
     if (response.ok) {
       Alert.alert(
         "✅ Added to Calendar",
-        "Your booking is now on Google Calendar!"
+        "Your booking is now on Google Calendar!",
       );
     } else {
       const error = await response.json();
       console.error("Google Calendar Error:", error);
       Alert.alert(
         "❌ Failed",
-        `Could not add event to Google Calendar: ${error.error.message}`
+        `Could not add event: ${error.error?.message || "Unknown error"}`,
       );
     }
   } catch (error) {

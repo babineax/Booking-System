@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "01142720-1cc8-440e-ad53-04116775d6d6"
+      }
+    },
+    "android": {
+      "package": "com.gideonsitienei.bookingsystem"
+    },
+    "ios": {
+      "bundleIdentifier": "com.gideonsitienei.bookingsystem",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
+  }
+}
